@@ -50,29 +50,32 @@ def registro():
 # Ruta para manejar el inicio de sesión (POST)
 @app.route('/login', methods=['POST'])
 def login():
-    mail = request.form['cor_usu']
-    password = request.form['con_usu']
-    
-    # Encriptar el password ingresado a MD5
-    password_md5 = hashlib.md5(password.encode()).hexdigest()
-    
-    # Buscar el usuario y la contraseña en la base de datos por su nombre de usuario
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute('SELECT id_usu, per_usu FROM usuario WHERE cor_usu=%s AND con_usu=%s;', (mail, password_md5))
-            user = cur.fetchone()
-    
-    if user is not None:
-        session['user_id'] = user[0]
-        session['user_rol'] = user[1]
-        return 'success'
-    else:
-        return 'error'
+    print("Entro Login")
+    if request.method == 'POST': 
+        mail = request.form['cor_usu']
+        password = request.form['con_usu']
+        
+        # Encriptar el password ingresado a MD5
+        password_md5 = hashlib.md5(password.encode()).hexdigest()
+        
+        # Buscar el usuario y la contraseña en la base de datos por su nombre de usuario
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute('SELECT id_usu, per_usu FROM usuario WHERE cor_usu=%s AND con_usu=%s;', (mail, password_md5))
+                user = cur.fetchone()
+        
+        if user is not None:
+            session['user_id'] = user[0]
+            session['user_rol'] = user[1]
+            return 'success'
+        else:
+            return 'error'
 
 
 # Ruta para manejar el registro de una cuenta (POST)       
 @app.route('/cuenta', methods=['POST'])
 def cuenta():    
+    print("Entro Registrar")
     if request.method == 'POST':        
         nombres = request.form['nom_usu']
         apellidos = request.form['ape_usu']
