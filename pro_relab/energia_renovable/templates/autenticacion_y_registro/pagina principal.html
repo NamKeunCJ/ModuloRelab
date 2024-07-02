@@ -1,0 +1,301 @@
+{% block head %} {% include 'layouts/head.html' %} {% endblock %}
+
+<body class="body-inicio">
+    {% block navbar %} {% include 'layouts/navbar.html' %} {% endblock %}
+    <section class="align-items-center justify-content-center">
+        <div class="container" data-aos="fade-up">
+            {% if pro %}
+            <div class="row">
+                <div class="col-sm-4">
+                    <h5 class="title-subpro"> • {{ pro.nom_pro }}</h5>
+                </div>
+                <div class="col-sm-8">
+                    <div class="btn-group" role="group" aria-label="Basic example">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="offcanvas" data-bs-target="#infoArreglo" aria-controls="offcanvasRight">Informacion Arreglo</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="offcanvas" data-bs-target="#infoInversor" aria-controls="offcanvasRight">Informacion Inversor</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="offcanvas" data-bs-target="#infoBanco" aria-controls="staticBackdrop">Informacion Banco</button>
+                    </div>
+                    {% if pro and proyecto[2] and suma_general_arr>0 and proyecto[0].eje_pro=="F" %}
+                    <button type="button" id="conect_sensor" class="btn btn-primary" data-bs-toggle='modal' data-bs-target='#conect_sensor_modal' style="margin: 1rem;">Conectar Sensor</button> 
+                        <p id="codigoACopiar" hidden>                            
+                            const int Pin_analogico = 5;
+                            int valorSensor = 0;
+                            float voltaje = 0;
+                            int cant = 0;
+                            float acum = 0;
+                            float promedio = 0;
+                            unsigned long tiempoInicio;
+
+                            // Factor de calibración proporcionado en el datasheet
+                            const float factorCalibracion = 5.0;  // W/m^2 por mV
+
+                            void setup() {
+                            Serial.begin(9600);
+                            tiempoInicio = millis();
+                            }
+
+                            void loop() {
+                            valorSensor = analogRead(Pin_analogico); // pin analógico que estoy usando  
+                            unsigned long tiempoActual = millis();
+                            
+                            // Verificar si han pasado 5 minutos (300,000 milisegundos)
+                            if (tiempoActual - tiempoInicio >= 300000) {
+                                // Realizar la acción después de 5 minutos
+                                promedio = acum / cant;
+                                Serial.println(promedio);
+                                
+                                // Reiniciar el tiempo de inicio para seguir realizando la acción cada 5 minutos
+                                tiempoInicio = tiempoActual;
+                                cant = 0;  // Reset the count for the next 5-minute interval
+                                acum = 0;  // Reset the cumulative sum for the next 5-minute interval
+                            } else {
+                                voltaje = (valorSensor * 5.0) / 1023.0; // Convierte bits a voltios (12 bits)
+                                float irradiance = voltaje * factorCalibracion; // Convierte voltaje a irradiancia
+                                acum += irradiance;
+                                cant += 1;
+                            }
+                            }
+                        </p>      
+                        <button id="btn_copy" class="btn btn-primary" onclick="copiarTexto()" title="Copiar codigo arduino para sensor Apogee-SP-110-SS"><i class="bi bi-files"></i></button>{% elif pro and proyecto[2] and suma_general_arr >0 and proyecto[0].eje_pro=="T"
+                    %}
+                    <button type="button" id="detener_sensor" class="btn btn-primary" data-bs-toggle='modal' data-bs-target='#detener_sensor_modal'>Detener Sensor</button> {% endif %}
+                </div>
+            </div>
+            {% block offcanvas_datos %} {% set ener_inv_ban = ener_inv_ban %} {% include 'creacion_de_proyecto/offcanvas_datos.html' %} {% endblock %} {% if error_cap_inv !='vacio' %}
+            <div class="alert alert-danger" style="margin: 1rem;">{{error_cap_inv}}</div>
+            {% endif %} {% endif %}
+            <div class="card card-dimension " style="margin: 1rem;height: 80vh;overflow: auto; border-color: black;">
+                <div class="card-body">
+                    <div class="container-fluid">
+                        {% if pro and pro.id_pro is not none %}
+                        <table class="mx-auto">
+                            <tr>
+                                <td style="width: 20rem;direction: rtl;">
+                                    {% for arr in proyecto[2] %}
+                                    <a class="enlace-link" id="delArr_{{ arr.id_arr }}" href="{{url_for('ver_modal_del_arr',id_arr=arr.id_arr)}}" title="{{ arr.id_arr }}">
+                                        <i class="bi bi-trash3-fill">Eliminar Arreglo</i>
+                                    </a>
+                                    <table style="margin-bottom: 1rem; width: 1rem;text-align: center;" class="esquina-arreglo{{arr.id_arr}}">
+                                        {% for i in range(arr.fil_arr) %} {% set paralelo = ParaleloArreglo.query.filter_by(id_arr=arr.id_arr).order_by(ParaleloArreglo.id_parr).all() %}
+                                        <tr>
+                                            {% for j in range(arr.col_arr) %} {% if paralelo %} {% set series_del_paralelo = SerieArreglo.query.filter_by(id_parr=paralelo[i].id_parr).order_by(SerieArreglo.id_sarr).all() %} {% set serie = series_del_paralelo[j] %} {% set panel = Panel.query.get(serie.id_pan)%}
+                                            {% if serie.id_pan is not none %} {% set panel = Panel.query.get(serie.id_pan) %} {% if panel.id_tec == 1 %} {% set panel_image = 'panel-monocristalino.png' %} {% elif panel.id_tec == 2 %} {% set panel_image
+                                            = 'panel-policristalino.png' %} {% elif panel.id_tec == 3 %} {% set panel_image = 'panel-amorfo.png' %} {% else %} {% set panel_image = 'panel.png' %} {% endif %} {% else %} {% set panel_image = 'panel-none.png'
+                                            %} {% endif %}
+                                            <td style="width: 2rem;">
+                                                <a class="img-panel-project img-zoom-project nav-link" id="projectSerie_{{ serie.id_sarr }}" href="{{ url_for('modal_panel_serie', id_sarr=serie.id_sarr) }}" title="{{ panel.ref_pan }}">
+                                                    <img src="{{ url_for('static', filename='images/' + panel_image) }}" style="width: 3.8rem;">
+                                                </a>
+                                            </td>
+                                            {% if j
+                                            < arr.col_arr-1 %} <td style="width: 2rem;">
+                                                <img src="{{ url_for('static', filename='images/conexion_p.png') }}" style="width: 2rem;">
+                                </td>
+                                {% endif %} {% endif %} {% endfor %}
+                                </tr>
+                                {% if i
+                                < arr.fil_arr-1 %} <tr>
+                                    {% for j in range(arr.col_arr*2-1) %} {% if j==0 or j==arr.col_arr*2-2 %}
+                                    <td style="height: 4rem; position: relative;">
+                                        <img src="{{ url_for('static', filename='images/conexion_linea.png') }}" style="height: 2.5rem;">
+                                    </td>
+                                    {% elif j!=0 or j!=arr.col_arr-1 %}
+                                    <td>
+                                    </td>
+                                    {% endif %} {% endfor %}
+                            </tr>
+                            {% endif %} {% endfor %}
+                            </table>
+                            </br>
+                            {% endfor %}
+                            </td>
+                            {% if proyecto[0].id_inv is not none and proyecto[2] %} {% for arr in proyecto[2] %}
+                            <div class="line" id="myLinep{{arr.id_arr}}"></div>
+                            {% endfor %} {% endif %}
+                            <td style="width: 20rem;">
+                                <div class="container">
+                                    <table class="mx-auto">
+                                        <tr>
+                                            {% set acum = namespace(value=0) %} {% set acum.value = acum.value + ener_inv_ban %} {% for car in proyecto[4] %} {% set acum.value = acum.value + car.pot_car %} {% if car.tip_car == "Lineal" and car.pot_car
+                                            <=0 %} {% set carga_img='bombillo-none.png' %} {% elif car.tip_car=="Lineal" and ene_real is not none and (ene_real[0].tot_ene*1000>=acum.value) and error_cap_inv =='vacio' and proyecto[1] %} {% set carga_img = 'bombillo.png' %} {% elif car.tip_car == "Lineal" and car.pot_car>0 %} {% set carga_img = 'bombillo-off.png' %} {% elif car.tip_car
+                                                == "Inductiva" and car.pot_car
+                                                <=0 %} {% set carga_img='motor-none.png' %} {% elif car.tip_car=="Inductiva" and ene_real is not none and (ene_real[0].tot_ene*1000>=acum.value) and error_cap_inv =='vacio' and proyecto[1]%} {% set carga_img= 'motor.png' %} {% elif car.tip_car == "Inductiva" and car.pot_car>0 %} {% set carga_img= 'motor-off.png' %} {% elif car.tip_car
+                                                    == "No Lineal" and car.pot_car
+                                                    <=0 %} {% set carga_img='pc-none.png' %} {% elif car.tip_car=="No Lineal" and ene_real is not none and (ene_real[0].tot_ene*1000>=acum.value) and error_cap_inv =='vacio' and proyecto[1]%} {% set carga_img = 'pc.png' %} {% elif car.tip_car == "No Lineal" and car.pot_car>0 %} {% set carga_img = 'pc-off.png' %} {% else %} {{ "Condición
+                                                        falsa" }} {% endif %}
+                                                        <td>
+                                                            <a class="img-inversor-project img-zoom-project nav-link " id="projectCarga_{{ car.id_car }}" href="{{ url_for('modal_carga_pot', id_car=car.id_car) }}">
+                                                                <img src="{{ url_for('static', filename='images/' + carga_img) }}" class="esquina-carga{{car.id_car}}" title="{{ car.tip_car }}">
+                                                            </a>
+                                                        </td>
+                                                        {% endfor %}
+                                        </tr>
+                                        <tr style="height: 10rem;">
+                                            {% if proyecto[0].id_inv is not none and proyecto[4] %} {% for car in proyecto[4] %}
+                                            <div class="line" id="myLinec{{car.id_car}}"></div>
+                                            {% endfor %} {% endif %}
+                                        </tr>
+                                    </table>
+                                    <div class="row ">
+                                        <div class="col d-flex align-items-end justify-content-center ">
+                                            {% if proyecto[1] or proyecto[0].id_inv is not none %} {% set inversor = Inversor.query.get(proyecto[1].id_inv) %}
+                                            <a class="img-inversor-project img-zoom-project nav-link" id="project_inversor_card" href="{{ url_for('modal_inversor_project_card', id_pro=proyecto[0].id_pro) }}" title="{{ inversor.ref_inv }}">
+                                                <img src="{{ url_for('static', filename='images/inversor.png') }}" class="esquina-inversor" style="width: 2.7rem;">
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row ">
+                                        <div class="col d-flex align-items-center justify-content-center ">
+                                            {% if proyecto[0].cred_pro =='Si' and (proyecto[1] or proyecto[0].id_inv is not none) %}
+                                            <svg height="250" width="2" style="position: relative;">
+                                                                <line x1="2.5" y1="0" x2="2.5" y2="100%" stroke="black" stroke-width="5"></line>
+                                                            </svg> {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row ">
+                                        <div class="col d-flex align-items-start justify-content-center ">
+                                            {% if proyecto[0].cred_pro =='Si' and (proyecto[1] or proyecto[0].id_inv is not none) %}
+                                            <img src="{{ url_for('static', filename='images/red.png') }}" style="width: 2.7rem;" class="img-zoom-project" title="Red"> {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            {% if proyecto[0].id_inv is not none and proyecto[3] %}
+                            <div class="line" id="myLine"></div>
+                            {% endif %}
+                            <td style="width: 20rem;">
+                                {% for ban in proyecto[3] %}
+                                <a class="enlace-link" id="delBan_{{ ban.id_ban }}" href="{{url_for('ver_modal_del_ban',id_ban=ban.id_ban)}}" title="{{ ban.id_ban }}">
+                                    <i class="bi bi-trash3-fill">Eliminar Banco</i>
+                                </a>
+                                <table style="margin-bottom: 1rem; width: 1rem;text-align: center;" class="esquina-banco">
+                                    {% for i in range(ban.fil_ban) %} {% set paralelob = ParaleloBanco.query.filter_by(id_ban=ban.id_ban).order_by(ParaleloBanco.id_pban).all() %}
+                                    <tr>
+                                        {% for j in range(ban.col_ban) %} {% set series_del_paralelo = SerieBanco.query.filter_by(id_pban=paralelob[i].id_pban).order_by(SerieBanco.id_sban).all() %} {% set serieb = series_del_paralelo[j] %} {% set bateria = Bateria.query.get(serieb.id_bat) %}
+                                        {% if serieb.id_bat is not none %} {% set bateria_image = 'bateria.png' %} {% else %} {% set bateria_image = 'bateria-none.png' %} {% endif %}
+                                        <td>
+                                            <a class="img-panel-project img-zoom-project nav-link" id="projectSerieBanco_{{ serieb.id_sban }}" href="{{ url_for('modal_bateria_serie', id_sban=serieb.id_sban) }}" title="{{ bateria.ref_bat }}">
+                                                <img src="{{ url_for('static', filename='images/' + bateria_image) }}" style="width: 3.8rem;">
+                                            </a>
+                                        </td>
+                                        {% if j
+                                        < ban.col_ban-1 %} <td style="width: 2rem;">
+                                            <img src="{{ url_for('static', filename='images/conexion_b.png') }}" style="height: 2.5rem;">
+                            </td>
+                            {% endif %} {% endfor %}
+                            </tr>
+                            {% if i
+                            < ban.fil_ban-1 %} <tr>
+                                {% for j in range(ban.col_ban*2-1) %} {% if j==0 or j==ban.col_ban*2-2 %}
+                                <td style="height: 4rem; position: relative;">
+                                    <img src="{{ url_for('static', filename='images/conexion_linea.png') }}" style="height: 2.5rem;">
+                                </td>
+                                {% elif j!=0 or j!=ban.col_ban-1 %}
+                                <td>
+                                </td>
+                                {% endif %} {% endfor %}
+                                </tr>
+                                {% endif %} {% endfor %}
+                                </table>
+                                </br>
+                                {% endfor %}
+                                </td>
+                                </tr>
+                        </table>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% if pro and pro.id_pro is not none %} {% for arr in proyecto[2] %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var arr_id = "{{arr.id_arr}}";
+                    var imgInversor = document.querySelector('.esquina-inversor');
+                    var imgArreglo = document.querySelector('.esquina-arreglo' + arr_id);
+                    var card = document.querySelector('.card-dimension');
+                    var line = document.getElementById('myLinep' + arr_id);
+
+                    function updateLine() {
+                        var imgInversorRect = imgInversor.getBoundingClientRect();
+                        var imgArregloRect = imgArreglo.getBoundingClientRect();
+                        var cardRect = card.getBoundingClientRect();
+
+                        var x1 = imgInversorRect.left - cardRect.left + card.scrollLeft;
+                        var y1 = imgInversorRect.top - cardRect.top + imgInversorRect.height / 2 + card.scrollTop;
+                        var x2 = imgArregloRect.right - cardRect.left + card.scrollLeft;
+                        var y2 = imgArregloRect.top - cardRect.top + card.scrollTop;
+
+                        var length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                        var angle = Math.atan2(y2 - y1, x2 - x1);
+
+                        // Aplica las transformaciones a la línea
+                        line.style.width = length + 'px';
+                        line.style.transform = 'rotate(' + angle + 'rad)';
+                        line.style.top = y1 + 'px';
+                        line.style.left = x1 + 'px';
+
+                        // Solicita la próxima animación
+                        requestAnimationFrame(updateLine);
+                    }
+
+                    // Inicia la animación después de que se haya cargado el contenido
+                    window.addEventListener('load', updateLine);
+                });
+            </script>
+
+            {% endfor %} {% endif %} {% if pro and pro.id_pro is not none %} {% for car in proyecto[4] %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var car_id = "{{car.id_car}}";
+                    var imgInversor = document.querySelector('.esquina-inversor');
+                    var imgCarga = document.querySelector('.esquina-carga' + car_id);
+                    var card = document.querySelector('.card-dimension');
+                    var line = document.getElementById('myLinec' + car_id);
+            
+                    function updateLine() {
+                        var imgInversorRect = imgInversor.getBoundingClientRect();
+                        var imgCargaRect = imgCarga.getBoundingClientRect();
+                        var cardRect = card.getBoundingClientRect();
+            
+                        var x1 = (imgInversorRect.left + imgInversorRect.right) / 2 - cardRect.left + card.scrollLeft;
+                        var y1 = imgInversorRect.top - cardRect.top + card.scrollTop;
+                        var x2 = imgCargaRect.left + 30 - cardRect.left + card.scrollLeft;
+                        var y2 = imgCargaRect.bottom - cardRect.top + card.scrollTop;
+            
+                        var length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                        var angle = Math.atan2(y2 - y1, x2 - x1);
+            
+                        // Apply transformations to the line
+                        line.style.width = length + 'px';
+                        line.style.transform = 'rotate(' + angle + 'rad)';
+                        line.style.top = y1 + 'px';
+                        line.style.left = x1 + 'px';
+            
+                        // Solicita la próxima animación
+                        requestAnimationFrame(updateLine);
+                    }
+            
+                    // Inicia la animación después de que se haya cargado el contenido
+                    window.addEventListener('load', updateLine);
+                });
+            </script>
+            
+            
+            {% endfor %} {% endif %} {% if pro and proyecto[0].eje_pro=="T" %}
+            <div class="row justify-content-end "><button type="button" style="width: 15rem;margin-bottom: 2rem;" class="btn btn-primary text-center" data-bs-toggle="offcanvas" data-bs-target="#datos_energia">Datos a tiempo real</button></div>
+            {% elif pro and proyecto[0].eje_pro=="F" and suma_general_arr>0 %}
+            <div class="row justify-content-end "><button type="button" style="width: 15rem;margin-bottom: 2rem;" class="btn btn-primary text-center" data-bs-toggle="offcanvas" data-bs-target="#datos_energia">Datos a tiempo real</button></div>
+            {% endif %}
+
+
+        </div>
+    </section>
+    <script rel="stylesheet " src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js "></script>
+    <script src="{{ url_for( 'static', filename='js/bootstrap.min.js' ) }} "></script>
+    <script src="{{ url_for( 'static', filename='js/datatables.js' ) }} "></script>
+    <script src="{{ url_for( 'static', filename='js/scripts.js' ) }} "></script>
+
+</body>
+
+</html>

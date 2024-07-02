@@ -1,0 +1,52 @@
+{% block head %} {% include 'layouts/head.html' %} {% endblock %}
+
+<body class="fondo_login">
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col" style="margin-top:10rem">
+                    <img src="{{ url_for('static', filename='images/sistema_fotovoltaico.png') }}" class="img-fluid img-login" alt="Imagen de Inicio de Sesión">
+                </div>
+                <div class="col-sm-6 transparent-bg" style="margin-top:4rem;margin-bottom:2rem">
+                    <div class="title-login" style="text-align: center;">Regístrate</div>
+                    <form id="registro-form" method="POST" action="{{ url_for('cuenta') }}">
+                        <div class="row">
+                            <div class="form-group mb-3 col">
+                                <label for="nom_usu"><h6><b>Nombres: </b></h6></label>
+                                <input type="text" class="form-control" id="nom_usu" name="nom_usu" maxlength="50" placeholder="Escribe tu nombre." required>
+                            </div>
+                            <div class="form-group mb-3 col">
+                                <label for="ape_usu"><h6><b>Apellidos: </b></h6></label>
+                                <input type="text" class="form-control" id="ape_usu" name="ape_usu" maxlength="50" placeholder="Escribe tus apellidos." required>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top: 1rem;">
+                            <div class="form-group mb-3 col-sm-6">
+                                <label for="doc_usu"><h6><b>Número de documento: </b></h6></label>
+                                <input type="text" class="form-control" id="doc_usu" name="doc_usu" maxlength="10" pattern="[0-9]+" placeholder="Escribe número de documento." required>
+                            </div>
+                            <div class="form-group mb-3 col-sm-6">
+                                <label for="cor_usu"><h6><b>Ingresa tu correo electrónico: </b></h6></label>
+                                <input type="email" class="form-control" id="cor_usu" name="cor_usu" maxlength="100" placeholder="Escribe tú correo electrónico." required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="con_usu"><h6><b>Escribe una contraseña</b></h6></label>
+                            <input type="password" class="form-control" id="con_usu" name="con_usu" minlength="8" maxlength="15" placeholder="Contraseña maximo de 15 caracteres." required>
+                        </div>
+                        <div class="h-captcha" data-sitekey="e6a7db78-1c2c-4183-9c16-f8ad8e871d75" style="margin-top: 2rem "></div>
+                        <a href="{{ url_for( 'redirigir') }} " style="color: azure; ">¡Ya tengo una cuenta!</a><br>
+                        <div id="alertContainer" style="margin-top:2rem "></div>
+                        <div id="capContainer" style="margin-top:2rem "></div>
+                        <button  type="submit" class="btn btn-primary ">Crear cuenta</button>
+                    </form>            
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+<script rel="stylesheet " src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js "></script>
+<script src="{{ url_for( 'static', filename='js/scripts.js' ) }} "></script>
+</html>
+
+</html>

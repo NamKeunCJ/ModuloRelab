@@ -1,0 +1,65 @@
+<div class="modal fade" id="modalProyecto" tabindex="-1" role="dialog" aria-labelledby="agregarProyectoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Crea un proyecto</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="proyecto-form" method="POST" action="{{ url_for('add_proyecto') }}">
+                <div class="modal-body" style="height: 18rem;">
+                    <div class="form-group mb-3">
+                        <label for="nom_pro">Escribe el nombre del proyecto:</label>
+                        <input type="text" class="form-control" id="nom_pro" name="nom_pro" maxlength="100" required>
+                    </div>
+                    <div id="alertContainer" style="margin-top:1rem"></div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="cred_pro">¿Su estructura se conectará a la red eléctrica?: </label>
+                        <select class="form-control" id="cred_pro" name="cred_pro" required>
+                            <option value="" disabled selected>Selecciona una respuesta</option>
+                            <option value="Si">Si</option>                          
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="cbat_pro">¿Su estructura se conectará a una bateria?: </label>
+                        <select class="form-control" id="cbat_pro" name="cbat_pro" required>
+                            <option value="" disabled selected>Selecciona una respuesta</option>
+                            <option value="Si">Si</option>                          
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                </div>
+                <script>
+                    //alerta danger panel
+                    $(document).ready(function() {
+                        $('#proyecto-form').submit(function(e) {
+                            e.preventDefault();
+                            $.ajax({
+                                type: 'POST',
+                                url: $(this).attr('action'),
+                                data: $(this).serialize(),
+                                success: function(response) {
+                                    if (response === 'exist') {
+                                        // Los datos ya existen: mostrar alerta
+                                        $('#alertContainer').html('<div class="alert alert-danger">El nombre del proyecto ya existe, escoge otro.</div>');
+                                    } else {
+                                        var id_pro = response.id_pro;
+                                        window.location.href = '/inicio_principal?id_pro=' + encodeURIComponent(id_pro);
+                                    }
+                                },
+                                error: function() {
+                                    // Error en la solicitud AJAX
+                                    $('#alertContainer').html('<div class="alert alert-danger">Error en la solicitud.</div>');
+                                }
+                            });
+                        });
+                    });
+                </script>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

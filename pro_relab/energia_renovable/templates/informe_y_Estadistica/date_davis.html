@@ -1,0 +1,159 @@
+{% block head %} {% include 'layouts/head.html' %} {% endblock %}
+<script>
+    $(function() {
+        $('#tabla').DataTable({
+            "language": {
+                "emptyTable": "No hay datos disponibles en la tabla",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                "infoEmpty": "Mostrando 0 a 0 de 0 entradas",
+                "infoFiltered": "(filtrado de _MAX_ entradas totales)",
+                "lengthMenu": "Mostrar _MENU_ entradas",
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "search": "Buscar:",
+                "zeroRecords": "No se encontraron registros coincidentes",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                }
+            },
+            "order": [
+                [0, "desc"]
+            ],
+        });
+    });
+</script>
+
+<body class="body-inicio">
+    {% block navbar %} {% include 'layouts/navbar.html' %} {% endblock %}
+    <section class="align-items-center justify-content-center">
+        <div class="container" data-aos="fade-up">
+            <div class="row" style="margin-bottom: 2rem;">
+                <div class="col-sm-7">
+                    <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto;">
+                        <div class="card-body">
+                            <h2>Datos de Irradiancia - Davis</h2>
+                            {% if irradiance_data %}
+                            <table id="tabla" class="table table-responsive ">
+                                <thead>
+                                    <tr>
+                                        <th scope="col ">Fecha y Hora</th>
+                                        <th scope="col ">Irradiancia Promedio (W/m²)</th>
+                                        <th scope="col ">Energía Solar (Wh/m²)</th>
+                                        <th scope="col ">Irradiancia Máxima (W/m²)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in irradiance_data %}
+                                    <tr>
+                                        <td>{{ row.date_time }}</td>
+                                        <td class="avg_irradiance">{{ row.avg_irradiance }}</td>
+                                        <td>{{ row.solar_energy }}</td>
+                                        <td class="highest_irradiance">{{ row.highest_irradiance }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <p class="text-danger ">Error: No se encontraron datos de irradiancia.</p>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-5">
+                    <canvas id="myChart" width="3000" height="3000"></canvas>
+                    <script>
+                        const irradianceData = [];
+                        const highestIrradianceData = [];
+                        const labels = [];
+
+                        const tableRows = document.querySelectorAll('#tabla tbody tr');
+
+                        tableRows.forEach(row => {
+                            const avgIrradianceCell = row.querySelector('.avg_irradiance');
+                            const highestIrradianceCell = row.querySelector('.highest_irradiance');
+                            const irradianceValue = avgIrradianceCell ? parseFloat(avgIrradianceCell.textContent) : null; // Manejar valores faltantes
+                            const highestIrradianceValue = highestIrradianceCell ? parseFloat(highestIrradianceCell.textContent) : null; // Manejar valores faltantes
+
+                            if (irradianceValue !== null) {
+                                irradianceData.push(irradianceValue);
+                                labels.push(row.querySelector('td:first-child').textContent); // Extraer etiquetas de fecha/hora
+                            }
+
+                            if (highestIrradianceValue !== null) {
+                                highestIrradianceData.push(highestIrradianceValue);
+                            }
+                        });
+
+                        const ctx = document.getElementById('myChart').getContext('2d');
+                        const chart = new Chart(ctx, {
+                            type: 'bar', // Tipo de gráfico de barras
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    type: 'line', // Tipo de gráfico de línea
+                                    label: 'Irradiancia Promedio (W/m²)', // Etiqueta de datos
+                                    data: irradianceData,
+                                    backgroundColor: 'rgba(255, 99, 132, 0.2)', // Fondo transparente rojo
+                                    borderColor: 'rgba(255, 99, 132, 1)', // Borde rojo
+                                    pointRadius: 0, // Eliminar círculos configurando pointRadius a 0
+                                    pointHoverRadius: 5, // Permitir efectos de desplazamiento con un pequeño radio
+                                    pointHitRadius: 5, // Mantener la capacidad de hacer clic en los puntos de datos
+                                    borderWidth: 2, // Línea más gruesa para mejor visibilidad
+                                    tension: 0.2, // Ajustar la tensión de la línea para una curva más suave (opcional)
+                                }, {
+                                    type: 'line', // Tipo de gráfico de barras
+                                    label: 'Irradiancia Máxima (W/m²)', // Etiqueta de datos para las barras
+                                    data: highestIrradianceData,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.2)', // Fondo transparente azul
+                                    borderColor: 'rgba(54, 162, 235, 1)', // Borde azul
+                                    pointRadius: 0, // Eliminar círculos configurando pointRadius a 0
+                                    pointHoverRadius: 5, // Permitir efectos de desplazamiento con un pequeño radio
+                                    pointHitRadius: 5, // Mantener la capacidad de hacer clic en los puntos de datos
+                                    borderWidth: 2, // Línea más gruesa para mejor visibilidad
+                                    tension: 0.2, // Ajustar la tensión de la línea para una curva más suave (opcional)
+                                }]
+                            },
+                            options: {
+                                animation: {
+                                    // Aplicar animación progresiva como antes (reemplazar con los ajustes de animación deseados)
+                                    x: {
+                                        type: 'number',
+                                        easing: 'linear',
+                                        duration: 2000,
+                                        from: NaN, // Inicialmente omitir puntos
+                                        delay(ctx) {
+                                            const delayBetweenPoints = 1000 / Math.max(irradianceData.length, highestIrradianceData.length);
+                                            if (ctx.datasetIndex === 0) { // Solo animar el primer conjunto de datos
+                                                return ctx.index * delayBetweenPoints;
+                                            } else {
+                                                return 0; // Sin retraso para conjuntos de datos posteriores
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    yAxes: [{
+                                        ticks: {
+                                            beginAtZero: true // Comenzar el eje y desde 0
+                                        }
+                                    }]
+                                }
+                            }
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts "></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js "></script>
+    <script src="{{ url_for( 'static', filename='js/bootstrap.min.js' ) }} "></script>
+    <script src="{{ url_for( 'static', filename='js/datatables.js' ) }} "></script>
+    <script src="{{ url_for( 'static', filename='js/scripts.js' ) }} "></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+</body>

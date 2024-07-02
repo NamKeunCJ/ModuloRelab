@@ -1,0 +1,14 @@
+<div class="modal fade"  id="delArr{{ arr.id_arr }}" tabindex="-1" role="dialog" aria-labelledby="ProjectDelArregloModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">¿Estas seguro de eliminar este arreglo de paneles del proyecto?</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class='modal-footer'>
+                <a href="{{ url_for('ver_modal_del_arr', id_arr_del=arr.id_arr)}}" class='btn btn-danger'>Eliminar</a>
+                <button type='button' class='btn btn btn-secondary' data-bs-dismiss='modal' aria-label='Close' title='Cancelar Actualizacion'>Cancelar</button>
+            </div>         
+        </div>
+    </div>
+</div>

@@ -1,0 +1,24 @@
+<div class="modal fade" id="projectCarga{{ car.id_car }}" tabindex="-1" role="dialog" aria-labelledby="ProjectArregloModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Selecciona la Potencia de la carga {{car.tip_car}}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-ser-pan" method="POST" action="{{ url_for('edit_pot_carga') }}">
+                <input type="hidden" name="id_car" value="{{ car.id_car }}">   
+                <div class="modal-body" style="height: 7rem;">
+                    <label for="pot_car">Potencia de la carga {{car.tip_car}}:</label>
+                    <div class="input-group mb-3">
+                        <input type="number" class="form-control" id="pot_car" aria-describedby="basic-addon2" min="1" max="1900" name="pot_car" step="0.01" value="{{car.pot_car}}" required>
+                        <span class="input-group-text" id="basic-addon2">W</span>
+                    </div>
+                </div>                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Seleccionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

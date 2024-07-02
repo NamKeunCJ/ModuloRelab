@@ -1,0 +1,94 @@
+{% block head %} {% include 'layouts/head.html' %} {% endblock %}
+
+<body style="margin-top: 8rem;">
+    {% block navbar %} {% include 'layouts/navbar.html' %} {% endblock %}
+    <section class="align-items-center justify-content-center">
+        <div class="container">
+            <form id="edit-profile-form" class="row g-3" action="{{url_for('edit_profile_save')}}" method="POST">
+                <div class="row">
+                    <div class="col-sm-6">
+                        </br>
+                        <h1 class="title-components">{{user.Usuario.nom_usu}} {{user.Usuario.ape_usu}} actualiza tu información. </h1>
+                        </br>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="alert alert-info form-text">Si desea modificar datos aparte de los establecidos, diríjase al administrador del laboratorio. 😊</div>
+                    </div>
+                </div>
+                <hr />
+                <div class=" col-md-6 ">
+                    <label for="nom_usu " class="form-label ">Nombre Completo</label>
+                    <div class="input-group ">
+                        <span class="input-group-text main-tras " id="addon-wrapping "><i class="bi bi-person-fill fuentenav "></i></span>
+                        <input type="text" class="form-control " id="nom_usu " name="nom_usu " placeholder="username " value="{{user.Usuario.nom_usu}} {{user.Usuario.ape_usu}} " disabled>
+                    </div>
+                </div>
+                <div class="col-md-6 ">
+                    <label for="doc_usu " class="form-label ">Documento de identidad</label>
+                    <div class="input-group ">
+                        <span class="input-group-text main-tras fuentenav " id="addon-wrapping "><b><i class="bi bi-person-vcard"></i></b></span>
+                        <input type="text" class="form-control " id="doc_usu " name="doc_usu " value="{{user.Usuario.doc_usu}} " disabled>
+                    </div>
+                </div>
+                <div class="col-md-6 ">
+                    <label for="cor_usu" class="form-label ">Correo Electrónico</label>
+                    <div class="input-group ">
+                        <span class="input-group-text main-tras " id="addon-wrapping "><i class="bi bi-envelope fuentenav "></i></span>
+                        <input type="email" class="form-control " id="cor_usu" name="cor_usu" value="{{user.Usuario.cor_usu}}" required>
+                    </div>
+                </div>
+                <div class="col-md-6 ">
+                    <label for="con_usu" class="form-label "> Actualiza la Contraseña</label>
+                    <div class="input-group ">
+                        <span class="input-group-text main-tras " id="addon-wrapping "><i class="bi bi-asterisk fuentenav "></i></span>
+                        <input type="password" class="form-control " name="con_usu" id="con_usu" value="***************">
+                    </div>
+                </div>
+                <div class="form-group mb-3 col-md-6">
+                    <label for="id_rol">Rol que desempeñas en la Universidad: </label>
+                    <div class="input-group ">
+                        <input type="text" class="form-control " id="id_rol " name="id_rol " value={{user.Roles.tip_rol}} disabled>
+                    </div>
+                </div>
+                {% if success=="1" %}
+                <div id="successMessage" class="alert alert-success">Sus datos se han guardado exitosamente.</div>
+                {% elif error=="2" %}
+                <div id="errorMessage" class="alert alert-danger">Los datos han sido utilizados en otra cuenta.</div>
+                {% endif %}
+                <script>
+                    // Función para ocultar el mensaje de éxito después de 5 segundos
+                    setTimeout(function() {
+                        document.getElementById("successMessage").style.display = "none";
+                    }, 5000); // 5000 milisegundos (5 segundos)
+
+                    // Función para ocultar el mensaje de error después de 5 segundos
+                    setTimeout(function() {
+                        document.getElementById("errorMessage").style.display = "none";
+                    }, 5000); // 5000 milisegundos (5 segundos)
+                </script>
+                <div class='text-center'>
+                    <button style="margin-top:1rem " type='button' id='{{user.Usuario.id_usu}}' class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#editar_usu{{user.Usuario.id_usu}}'> Guardar                 
+                    </button>
+                    <div class='modal fade' id='editar_usu{{user.Usuario.id_usu}}' tabindex='-1' aria-labelledby='exampleModalLabel' aria-hidden='true'>
+                        <div class='modal-dialog'>
+                            <div class='modal-content'>
+                                <div class='modal-header'>
+                                    <h6 class='modal-title fuente' id='exampleModalLabel'>¿Desea Actualizar su información?</h6>
+                                    <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                                </div>
+                                <div class='modal-footer'>
+                                    <button type='submit' id='guardar' class='btn btn-primary'>Guardar</button>
+                                    <button type='button' class='btn btn btn-secondary' data-bs-dismiss='modal' aria-label='Close' title='Cancelar Actualizacion'>Cancelar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+    <script rel="stylesheet " src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js "></script>
+    <script src="{{ url_for( 'static', filename='js/bootstrap.min.js' ) }} "></script>
+    <script src="{{ url_for( 'static', filename='js/datatables.js' ) }} "></script>
+    <script src="{{ url_for( 'static', filename='js/scripts.js' ) }} "></script>
+</body>

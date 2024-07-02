@@ -1,0 +1,113 @@
+<script>
+    $(function() {
+        $('#tabla').DataTable({
+            "language": {
+                "emptyTable": "No hay datos disponibles en la tabla",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                "infoEmpty": "Mostrando 0 a 0 de 0 entradas",
+                "infoFiltered": "(filtrado de _MAX_ entradas totales)",
+                "lengthMenu": "Mostrar _MENU_ entradas",
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "search": "Buscar:",
+                "zeroRecords": "No se encontraron registros coincidentes",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                }
+            }
+        });
+    });
+</script>
+<div class="modal fade" id="projectSerieBanco{{ sban.id_sban }}" tabindex="-1" role="dialog" aria-labelledby="ProjectBancoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Informacion de la bateria</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-ser-pan" method="POST" action="{{ url_for('edit_bateria') }}">
+                <div class="modal-body">
+                    <h5 style="margin-bottom: 1rem;"><b> Informacion de la bateria:  </b></h5>
+                    {%if info is not none %} {% if info.est_bat=='Deshabilitado'%}
+                    <div class="alert alert-danger">La Bateria {{info.ref_bat}} con identificacion {{info.idu_bat}} se encuentra deshabilitado. Si deseas continuar con el proyecto, utiliza otra Bateria.</div>
+                    {% endif %}
+                    <table class="table table-responsive">
+                        <thead>
+                            <tr>
+                                <th>Referencia de la Bateria</th>
+                                <th>Voltaje Bateria (V)</th>
+                                <th>Capacidad Bateria(Ah)</th>
+                                <th>Energia Bateria(Wh)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{info.ref_bat}}</td>
+                                <td>{{info.vol_bat}}</td>
+                                <td>{{info.cap_bat}}</td>
+                                <td>{{info.ene_bat}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    {% else %} No hay informacion para mostrar en este momento. {%endif%}
+                    <input type="hidden" name="id_sban" value="{{ sban.id_sban }}">
+                    <h5 style="margin-top: 2rem; margin-bottom: 2rem;"><b> Escoge la bateria que se requiera:  </b></h5>
+                    <table id="tabla" class="table table-responsive">
+                        <thead>
+                            <tr>
+                                <th>Referencia de la Bateria</th>
+                                <th>Voltaje Bateria (V)</th>
+                                <th>Capacidad Bateria(Ah)</th>
+                                <th>Energia Bateria(Wh)</th>
+                                <th>-</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {%for bat in bat%}
+                            <tr>
+                                <td>{{bat.ref_bat}}</td>
+                                <td>{{bat.vol_bat}}</td>
+                                <td>{{bat.cap_bat}}</td>
+                                <td>{{bat.ene_bat}}</td>
+                                <td><input class="form-check-input" type="radio" name="id_bat" id="id_bat" value="{{bat.id_bat}}" required></td>
+                            </tr>
+                            {%endfor%}
+                        </tbody>
+                    </table>
+                    <div id="alertContainer" style="margin-top:2rem"></div>
+                </div>
+                <script>
+                    //alerta danger panel
+                    $(document).ready(function() {
+                        $('#form-ser-pan').submit(function(e) {
+                            e.preventDefault();
+                            $.ajax({
+                                type: 'POST',
+                                url: $(this).attr('action'),
+                                data: $(this).serialize(),
+                                success: function(response) {
+                                    if (response === 'success') {
+                                        // Los datos ya existen: mostrar alerta
+                                        location.reload();
+                                        //$('#alertContainer').html('<div class="alert alert-success">Panel seleccionado correctamente</div>');
+                                    }
+                                },
+                                error: function() {
+                                    // Error en la solicitud AJAX
+                                    $('#alertContainer').html('<div class="alert alert-danger">Error en la solicitud.</div>');
+                                }
+                            });
+                        });
+                    });
+                </script>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Seleccionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

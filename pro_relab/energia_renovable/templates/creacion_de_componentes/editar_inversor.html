@@ -1,0 +1,164 @@
+{% block head %} {% include 'layouts/head.html' %} {% endblock %}
+<script>
+    $(function() {
+        $('#tabla').DataTable({
+            "language": {
+                "emptyTable": "No hay datos disponibles en la tabla",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                "infoEmpty": "Mostrando 0 a 0 de 0 entradas",
+                "infoFiltered": "(filtrado de _MAX_ entradas totales)",
+                "lengthMenu": "Mostrar _MENU_ entradas",
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "search": "Buscar:",
+                "zeroRecords": "No se encontraron registros coincidentes",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                }
+            }
+        });
+    });
+</script>
+
+<body class="body-inicio">
+    {% block navbar %} {% include 'layouts/navbar.html' %} {% endblock %}
+    <section class="align-items-center justify-content-center">
+        <div class="container" data-aos="fade-up">
+            <h5 class="title-components " style="margin-bottom: 3rem;"><b> INVERSORES AGREGADOS </b></h5>
+            {% if success=="1" %}
+            <div id="successMessage" class="alert alert-success">Los datos del inversor se han guardado exitosamente.</div>
+            {% elif error=="2" %}
+            <div id="errorMessage" class="alert alert-danger">Los datos del inversor no se han podido guardar, revisa el margen de error.</div>
+            {% endif %}
+            <script>
+                // Función para ocultar el mensaje de éxito después de 5 segundos
+                setTimeout(function() {
+                    document.getElementById("successMessage").style.display = "none";
+                }, 5000); // 5000 milisegundos (5 segundos)
+
+                // Función para ocultar el mensaje de error después de 5 segundos
+                setTimeout(function() {
+                    document.getElementById("errorMessage").style.display = "none";
+                }, 5000); // 5000 milisegundos (5 segundos)
+            </script>
+            <table id="tabla" class="table table-responsive">
+                <thead>
+                    <tr>
+                        <th>Identificacion Inventario</th>
+                        <th>Referencia inversor</th>
+                        <th>Número de Entradas</th>
+                        <th>Voltaje Máxima de Entrada (Vme)</th>
+                        <th>Corriente Máxima de Entrada (Ime)</th>
+                        <th>Potencia Máxima (Pmax)</th>
+                        <th>Voltaje Salida (Vout)</th>
+                        <th>Eficiencia (%)</th>
+                        <th>Onda de Salida</th>
+                        <th>Estado del Inversor</th>
+                        <th>Editar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {%for inversor in inv_usu %}
+                    <tr>
+                        <td>{{inversor.idu_inv}}</td>
+                        <td>{{inversor.ref_inv}}</td>
+                        <td>{{inversor.ent_inv}}</td>
+                        <td>{{inversor.vme_inv}}</td>
+                        <td>{{inversor.ime_inv}}</td>
+                        <td>{{inversor.pmax_inv}}</td>
+                        <td>{{inversor.vsa_inv}}</td>
+                        <td>{{inversor.efi_inv}}</td>
+                        <td>{{inversor.ond_inv}}</td>
+                        <td>{{inversor.est_inv}}</td>
+                        <td><button type="button" style="color: rgb(47, 133, 204);" id="edit{{inversor.id_inv}}" class="btn icon" data-bs-toggle="modal" data-bs-target="#editar_inversor_{{inversor.id_inv}}"><i class="bi bi-pencil-square"></i></button></td>
+                    </tr>
+                    <div class="modal fade" id="editar_inversor_{{inversor.id_inv}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabel">¿Desea editar este inversor?</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form method="POST" action="{{ url_for('update_inversor_save')}}">
+                                    <div class="modal-body">
+                                        <input type="hidden" id="id_inv" name="id_inv" value="{{inversor.id_inv}}">
+                                        <div class="form-group mb-3">
+                                            <label for="ref_inv">Referencia del Inversor:</label>
+                                            <input type="text" class="form-control" id="ref_inv" name="ref_inv" maxlength="100" value="{{inversor.ref_inv}}" required>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="idu_inv">Identificacion Codigo Universidad:</label>
+                                            <input type="text" class="form-control" id="idu_inv" name="idu_inv" pattern="[0-9]*" inputmode="numeric" maxlength="9" value="{{inversor.idu_inv}}" disabled>
+                                        </div>
+                                        <label for="ent_inv">Número de entradas:</label>
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text" id="basic-addon1">#</span>
+                                            <input type="number" class="form-control" id="ent_inv" aria-describedby="basic-addon1" min="1" max="6" name="ent_inv" step="1" value="{{inversor.ent_inv}}" required>
+                                        </div>
+                                        <label for="pmax_inv">Potencia Máxima (Pmax):</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="pmax_inv" aria-describedby="basic-addon2" min="1" max="9999" name="pmax_inv" step="0.01" value="{{inversor.pmax_inv}}" required>
+                                            <span class="input-group-text" id="basic-addon2">W</span>
+                                        </div>
+                                        <label for="vme_inv">Voltaje Máxima de Entrada (Vme):</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="vme_inv" aria-describedby="basic-addon2" min="0.1" max="9999" name="vme_inv" step="0.01" value="{{inversor.vme_inv}}" required>
+                                            <span class="input-group-text" id="basic-addon2">V</span>
+                                        </div>
+                                        <label for="ime_inv">Corriente Máxima de Entrada (Ime):</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="ime_inv" aria-describedby="basic-addon2" min="0.1" max="9999" name="ime_inv" step="0.01" value="{{inversor.ime_inv}}" required>
+                                            <span class="input-group-text" id="basic-addon2">A</span>
+                                        </div>
+                                        <label for="vsa_inv">Voltaje Salida (Vout):</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="vsa_inv" aria-describedby="basic-addon2" min="110" max="220" maxlength="5" name="vsa_inv" step="0.01" value="{{inversor.vsa_inv}}" required>
+                                            <span class="input-group-text" id="basic-addon2">V</span>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="ond_inv">Tipo de Onda:</label>
+                                            <select class="form-control" id="ond_inv" name="ond_inv" required>
+                                                <option value="{{inversor.ond_inv}}"   selected>{{inversor.ond_inv}} </option>
+                                                <option value="Pura">Pura</option>
+                                                <option value="No Pura">No Pura</option>
+                                            </select>
+                                        </div>
+                                        <label for="efi_inv">Eficiencia:</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="efi_inv" max="100" min="1" name="efi_inv" step="1" value="{{inversor.efi_inv}}" required>
+                                            <span class="input-group-text" id="basic-addon2">%</span>
+                                        </div>
+                                        <div class="form-group" style="margin-top: 1rem;">
+                                            <label for="est_inv">Estado del Inversor:</label>
+                                            <select class="form-control" id="est_inv" name="est_inv" required>
+                                              <option value="{{inversor.est_inv}}" selected>{{inversor.est_inv}}</option>
+                                              <option value="Habilitado">Habilitado</option>
+                                              <option value="Deshabilitado">Deshabilitado</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-text" id="basic-addon4">Si el componente no se encuentra en ningún proyecto, será eliminado si es deshabilitado.</div>
+                                        <div id="alertContainer" style="margin-top:2rem"></div>
+                                    </div>                                    
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary" id="guardarPanel">Guardar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {%endfor%}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <script rel="stylesheet" src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/datatables.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+
+</html>

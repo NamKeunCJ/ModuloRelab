@@ -1,0 +1,56 @@
+{% block head %} {% include 'layouts/head.html' %} {% endblock %}
+
+<body class="body-inicio" style="background-color: #9bb4cf;">
+    {% block navbar %} {% include 'layouts/navbar.html' %} {% endblock %}
+    <section class="align-items-center justify-content-center">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-8">
+                    <div class="row" style="margin-bottom: 3rem;"> 
+                        <div class="col-sm-5 title-components ">Busca tu proyecto</div>
+                        <div class="col" >
+                            <form id="searchForm">
+                                <div class="input-group">                                    
+                                    <input type="text" class="form-control" id="searchInput" placeholder="Buscar tu proyecto aquí">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" type="submit" id="searchButton">Buscar</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <script>
+                        var searchInput = document.getElementById('searchInput');
+                        var searchButton = document.getElementById('searchButton');
+                        
+                        searchButton.addEventListener('click', function(event) {
+                            event.preventDefault(); 
+                            var searchTerm = searchInput.value.trim();
+                            
+                            if (searchTerm!=='' || searchTerm==='' ) {
+                                // Realizar la acción de búsqueda mediante AJAX
+                                $.ajax({
+                                    type: 'GET',
+                                    url: '/list_project',
+                                    data: { buscar: searchTerm },
+                                    success: function(response) {
+                                        $('#contenido').html(response);
+                                    },
+                                    error: function() {
+                                        console.error('Error en la solicitud AJAX');
+                                    }
+                                });
+                            }
+                        });
+                    </script>                    
+                    <div id="contenido">{% block search_project %} {% include 'creacion_de_proyecto/search_project.html' %} {% endblock %}</div>   
+                </div>
+                <div class="col-sm-4" style="margin-top: 6rem;"><img src="{{ url_for('static', filename='images/list_project.png') }}"></div>          
+            </div>
+        </div>
+    </section>
+    <script rel="stylesheet " src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js "></script>
+    <script src="{{ url_for( 'static', filename='js/bootstrap.min.js' ) }} "></script>
+    <script src="{{ url_for( 'static', filename='js/datatables.js' ) }} "></script>
+    <script src="{{ url_for( 'static', filename='js/scripts.js' ) }} "></script>
+</body>

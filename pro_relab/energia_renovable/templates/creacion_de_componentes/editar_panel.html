@@ -1,0 +1,217 @@
+{% block head %} {% include 'layouts/head.html' %} {% endblock %}
+<script>
+    $(function() {
+        $('#tabla').DataTable({
+            "language": {
+                "emptyTable": "No hay datos disponibles en la tabla",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                "infoEmpty": "Mostrando 0 a 0 de 0 entradas",
+                "infoFiltered": "(filtrado de _MAX_ entradas totales)",
+                "lengthMenu": "Mostrar _MENU_ entradas",
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "search": "Buscar:",
+                "zeroRecords": "No se encontraron registros coincidentes",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                }
+            }
+        });
+    });
+</script>
+
+<body class="body-inicio">
+    {% block navbar %} {% include 'layouts/navbar.html' %} {% endblock %}
+    <section class="align-items-center justify-content-center">
+        <div class="container" data-aos="fade-up">
+            <h5 class="title-components " style="margin-bottom: 3rem;"><b> PANELES AGREGADOS </b></h5>
+            {% if success=="1" %}
+            <div id="successMessage" class="alert alert-success">Los datos del panel se han guardado exitosamente.</div>
+            {% elif error=="2" %}
+            <div id="errorMessage" class="alert alert-danger">Los datos del panel no se han podido guardar, revisa el margen de error.</div>
+            {% endif %}
+            <script>
+                // Función para ocultar el mensaje de éxito después de 5 segundos
+                setTimeout(function() {
+                    document.getElementById("successMessage").style.display = "none";
+                }, 5000); // 5000 milisegundos (5 segundos)
+
+                // Función para ocultar el mensaje de error después de 5 segundos
+                setTimeout(function() {
+                    document.getElementById("errorMessage").style.display = "none";
+                }, 5000); // 5000 milisegundos (5 segundos)
+            </script>
+            <table id="tabla" class="table table-responsive">
+                <thead>
+                    <tr>
+                        <th>Identificacion Inventario</th>
+                        <th>Referencia del Panel</th>
+                        <th>Potencia Máxima (Pmax)</th>
+                        <th>Voltaje Máxima (Vmp)</th>
+                        <th>Corriente Máxima (Imp)</th>
+                        <th>Voltaje Circuito Abierto (Voc)</th>
+                        <th>Corriente Corto Circuito (Isc)</th>
+                        <th>Area del Panel m^2</th>
+                        <th>Tecnología del Panel</th>
+                        <th>Estado del Panel</th>
+                        <th>Editar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {%for panel, tecnologia in pan_usu%}
+                    <tr>
+                        <td>{{panel.idu_pan}}</td>
+                        <td>{{panel.ref_pan}}</td>
+                        <td>{{panel.pmax_pan}}</td>
+                        <td>{{panel.vmp_pan}}</td>
+                        <td>{{panel.imp_pan}}</td>
+                        <td>{{panel.voc_pan}}</td>
+                        <td>{{panel.isc_pan}}</td>
+                        <td>{{panel.are_pan}}</td>
+                        <td>{{tecnologia.nom_tec}}</td>
+                        <td>{{panel.est_pan}}</td>
+                        <td><button type="button" style="color: rgb(47, 133, 204);" id="edit{{panel.id_pan}}" class="btn icon" data-bs-toggle="modal" data-bs-target="#editar_panel_{{panel.id_pan}}"><i class="bi bi-pencil-square"></i></button></td>
+                    </tr>
+                    <div class="modal fade" id="editar_panel_{{panel.id_pan}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="exampleModalLabel">¿Desea editar este panel?</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form id="update-panel-form" method="POST" action="{{ url_for('update_panel_save')}}">
+                                    <div class="modal-body">
+                                        <input type="hidden" id="id_pan" name="id_pan" value="{{panel.id_pan}}">
+                                        <div class="form-group">
+                                            <label for="ref_pan">Referencia del Panel:</label>
+                                            <input type="text" class="form-control" id="ref_pan" name="ref_pan" maxlength="100" value="{{panel.ref_pan}}" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="idu_pan">Identificacion Codigo Universidad:</label>
+                                            <input type="text" class="form-control" id="idu_pan" name="idu_pan" pattern="[0-9]*" inputmode="numeric" maxlength="13" value="{{panel.idu_pan}}" disabled>
+                                        </div>
+                                        <label for="pmax_pan">Potencia Máxima (Pmax):</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="pmax_pan" aria-describedby="basic-addon2" min="1" max="999" name="pmax_pan" step="0.01" value="{{panel.pmax_pan}}" required>
+                                            <span class="input-group-text" id="basic-addon2">W</span>
+                                        </div>
+                                        <label for="vmp_pan">Voltaje Máxima (Vmp):</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="vmp_pan" aria-describedby="basic-addon2" min="0.1" max="999" name="vmp_pan" step="0.01" value="{{panel.vmp_pan}}" required>
+                                            <span class="input-group-text" id="basic-addon2">V</span>
+                                        </div>
+                                        <label for="imp_pan">Corriente Máxima (Imp):</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="imp_pan" aria-describedby="basic-addon2" min="0.1" max="999" name="imp_pan" step="0.01" value="{{panel.imp_pan}}" required>
+                                            <span class="input-group-text" id="basic-addon2">A</span>
+                                        </div>
+                                        <label for="voc_pan">Voltaje Circuito Abierto (Voc):</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="voc_pan" aria-describedby="basic-addon2" min="0.1" max="999" name="voc_pan" step="0.01" value="{{panel.voc_pan}}" required>
+                                            <span class="input-group-text" id="basic-addon2">V</span>
+                                        </div>
+                                        <label for="isc_pan">Corriente Corto Circuito (Isc):</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="isc_pan" aria-describedby="basic-addon2" min="0.1" max="999" name="isc_pan" step="0.01" value="{{panel.isc_pan}}" required>
+                                            <span class="input-group-text" id="basic-addon2">A</span>
+                                        </div>                                        
+                                        <label for="lar_pan">Largo del panel :</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="lar_pan" aria-describedby="basic-addon2" min="0" max="9999" name="lar_pan" step="0.01" value="{{panel.lar_pan}}" required>
+                                            <span class="input-group-text" id="basic-addon2">Mts</span>
+                                        </div>
+                                        <label for="anc_pan">Ancho del panel:</label>
+                                        <div class="input-group mb-3">
+                                            <input type="number" class="form-control" id="anc_pan" aria-describedby="basic-addon2" min="0" max="9999" name="anc_pan" step="0.01" value="{{panel.anc_pan}}" required>
+                                            <span class="input-group-text" id="basic-addon2">Mts</span>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tec_pan_{{ panel.id_pan }}">Tecnología del Panel:</label>
+                                            <select class="form-control tec-pan-select" id="tec_pan_{{ panel.id_pan }}" name="tec_pan" required>
+                                                <option value="{{ tecnologia.nom_tec }}" selected>{{ tecnologia.nom_tec }}</option>
+                                                {% for tecno in tecno %}
+                                                    <option value="{{ tecno.nom_tec }}">{{ tecno.nom_tec }}</option>
+                                                {% endfor %}
+                                                <option value="Otro{{ panel.id_pan }}">Otro</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group otra-tecnologia" id="otraTecnologia_{{ panel.id_pan }}" style="display: none;">
+                                            <label for="otra_tec_pan_{{ panel.id_pan }}">Especifica la otra tecnología:</label>
+                                            <input type="text" class="form-control otra-tecnologia-input" id="otra_tec_pan_{{ panel.id_pan }}" name="otra_tec_pan">
+                                            <button type="button" class="btn btn-secondary aceptar-otra-tecnologia" style="margin-top: 1rem;" data-panel-id="{{ panel.id_pan }}">Aceptar</button>
+                                        </div>
+                                        <div class="form-group" style="margin-top: 1rem;">
+                                            <label for="est_pan">Estado del Panel:</label>
+                                            <select class="form-control" id="est_pan" name="est_pan" required>
+                                                <option value="{{ panel.est_pan }}" selected>{{ panel.est_pan }}</option>
+                                                <option value="Habilitado">Habilitado</option>
+                                                <option value="Deshabilitado">Deshabilitado</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-text" id="basic-addon4">Si el componente no se encuentra en ningún proyecto, será eliminado si es deshabilitado.</div>
+                                        <div id="alerta"></div>
+                                    </div>
+                                        
+                                    <script>
+                                        document.addEventListener('DOMContentLoaded', function () {
+                                            // Itera sobre todos los elementos con la clase 'tec-pan-select'
+                                            document.querySelectorAll('.tec-pan-select').forEach(function (tecPanSelect) {
+                                                var panelId = tecPanSelect.id.split('_')[2]; // Extrae el id del panel
+                                                var otraTecnologia = document.getElementById('otraTecnologia_' + panelId);
+                                                var otraTecnologiaInput = document.getElementById('otra_tec_pan_' + panelId);
+                                    
+                                                // Añade el evento change a cada elemento 'tec-pan-select'
+                                                tecPanSelect.addEventListener('change', function () {
+                                                    if (this.value === 'Otro' + panelId) {
+                                                        otraTecnologia.style.display = 'block';
+                                                    } else {
+                                                        otraTecnologia.style.display = 'none';
+                                                    }
+                                                });
+                                    
+                                                // Añade el evento click a cada botón 'aceptar-otra-tecnologia'
+                                                document.querySelector('.aceptar-otra-tecnologia[data-panel-id="' + panelId + '"]').addEventListener('click', function () {
+                                                    var nuevaTecnologia = otraTecnologiaInput.value.trim();
+                                                    if (nuevaTecnologia !== '') {
+                                                        // Verifica si la opción ya existe antes de agregarla
+                                                        var optionExists = Array.from(tecPanSelect.options).some(function (option) {
+                                                            return option.value === nuevaTecnologia;
+                                                        });
+
+                                                        if (!optionExists) {
+                                                            tecPanSelect.innerHTML += '<option value="' + nuevaTecnologia + '">' + nuevaTecnologia + '</option>';
+                                                        }
+                                                        
+                                                        tecPanSelect.value = nuevaTecnologia;
+                                                        otraTecnologia.style.display = 'none';
+                                                    }
+                                                });
+
+                                            });
+                                        });
+                                    </script>
+                                        
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary" id="guardarPanel">Guardar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {%endfor%}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <script rel="stylesheet" src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/datatables.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+
+</html>
