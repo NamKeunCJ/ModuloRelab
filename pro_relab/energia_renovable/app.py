@@ -7,100 +7,100 @@ import requests #elemetos para datos davis
 import xml.etree.ElementTree as ET #elemetos para datos davis
 import datetime # la fecha davis cada 5 min
 
+# Crear una instancia de la aplicación Flask
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'unicesmag'
-app.config['DB_HOST'] = 'localhost'
-app.config['DB_NAME'] = 'energia_renovable'
-app.config['DB_USER'] = 'postgres'
-app.config['DB_PASSWORD'] = 'unicesmag'
 
+# Configurar la clave secreta de la aplicación, utilizada para gestionar sesiones y cookies seguras
+app.config['SECRET_KEY'] = 'unicesmag'
+
+# Configurar los parámetros de la base de datos
+app.config['DB_HOST'] = 'localhost'  # El host donde se encuentra la base de datos
+app.config['DB_NAME'] = 'energia_renovable'  # El nombre de la base de datos
+app.config['DB_USER'] = 'postgres'  # El usuario de la base de datos
+app.config['DB_PASSWORD'] = 'unicesmag'  # La contraseña del usuario de la base de datos
+
+# Definir una función para obtener la conexión a la base de datos
 def get_db_connection():
+    # Establecer una conexión a la base de datos utilizando los parámetros configurados en la aplicación
     conn = psycopg2.connect(
         host=app.config['DB_HOST'],
         database=app.config['DB_NAME'],
         user=app.config['DB_USER'],
         password=app.config['DB_PASSWORD']
     )
-    return conn
+    return conn  # Devolver la conexión a la base de datos
 
-# Ruta para mostrar datos en la página index
+# Ruta para la página de inicio de sesión
 @app.route('/')
+@app.route('/inicio_sesion')
 def inicio_sesion():
-    user_id = session.get('user_id')
+    # Obtener el ID de usuario de la sesión actual
+    user_id = session.get('user_id')    
+    # Verificar si el usuario ha iniciado sesión
     if user_id is not None:
         # Si el usuario ha iniciado sesión, redirigir a la página principal
-        return redirect(url_for('inicio_principal'))
+        return redirect(url_for('inicio_principal'))    
+    # Si el usuario no ha iniciado sesión, renderizar la página de inicio de sesión
     return render_template('autenticacion_y_registro/index.html')
 
-# Agrega esta nueva ruta para redirigir al índice
-@app.route('/redirigir')
-def redirigir():
-    return redirect(url_for('inicio_sesion'))
-
-# Ruta para realizar el registro
-@app.route('/registro', methods=['GET'])
-def registro():
-    # Buscar todos los roles en la base de datos
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute('SELECT * FROM roles')
-            rol = cur.fetchone()
-    return render_template('autenticacion_y_registro/registro.html', rol = rol)
-
-# Ruta para manejar el inicio de sesión (POST)
+# Ruta para manejar el inicio de sesión
 @app.route('/login', methods=['POST'])
 def login():
-    print("Entro Login")
+    print("Entro Login")    
+    # Verificar si el método de la solicitud es POST
     if request.method == 'POST': 
-        mail = request.form['cor_usu']
-        password = request.form['con_usu']
-        
-        # Encriptar el password ingresado a MD5
-        password_md5 = hashlib.md5(password.encode()).hexdigest()
-        
-        # Buscar el usuario y la contraseña en la base de datos por su nombre de usuario
+        mail = request.form['cor_usu']  # Obtener el correo del usuario desde el formulario
+        password = request.form['con_usu']  # Obtener la contraseña del usuario desde el formulario        
+        # Encriptar la contraseña ingresada a MD5
+        password_md5 = hashlib.md5(password.encode()).hexdigest()        
+        # Buscar el usuario y la contraseña en la base de datos por su correo y contraseña
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute('SELECT id_usu, per_usu FROM usuario WHERE cor_usu=%s AND con_usu=%s;', (mail, password_md5))
-                user = cur.fetchone()
-        
+                user = cur.fetchone()  # Obtener el primer resultado de la consulta        
+        # Verificar si se encontró un usuario con las credenciales proporcionadas
         if user is not None:
-            session['user_id'] = user[0]
-            session['user_rol'] = user[1]
-            return 'success'
+            session['user_id'] = user[0]  # Guardar el ID del usuario en la sesión
+            session['user_rol'] = user[1]  # Guardar el rol del usuario en la sesión
+            return 'success'  # Devolver 'success' si el inicio de sesión es exitoso
         else:
-            return 'error'
+            return 'error'  # Devolver 'error' si las credenciales son incorrectas
 
-
-# Ruta para manejar el registro de una cuenta (POST)       
-@app.route('/cuenta', methods=['POST'])
-def cuenta():    
-    print("Entro Registrar")
+# Ruta para manejar el registro de una nueva cuenta (POST)
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():    
+    print("Entro Registrar")    
     if request.method == 'POST':        
+        # Obtener los datos del formulario
         nombres = request.form['nom_usu']
         apellidos = request.form['ape_usu']
         correo = request.form['cor_usu']
         numero_documento = request.form['doc_usu']
-        contra = request.form['con_usu']
-        password_md5 = hashlib.md5(contra.encode()).hexdigest()
-        # Buscar el usuario en la base de datos por su nombre de usuario y número de documento
+        contra = request.form['con_usu']        
+        # Codificar la contraseña en formato MD5
+        password_md5 = hashlib.md5(contra.encode()).hexdigest()        
+        # Buscar el usuario en la base de datos por su correo electrónico o número de documento
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute('SELECT cor_usu, doc_usu FROM usuario WHERE cor_usu=%s OR doc_usu=%s;', (correo, numero_documento))
                 user_exis = cur.fetchone()
-                print(user_exis)
+                print(user_exis)                
                 if user_exis is not None:
+                    # Si el usuario ya existe, devolver 'exist'
                     print("El usuario ya existe en la base de datos")
                     return 'exist' 
                 else:                     
-                    # Insertar el nuevo usuario en la base de datos
+                    # Si el usuario no existe, insertar el nuevo usuario en la base de datos
                     cur.execute("""
                         INSERT INTO usuario (nom_usu, ape_usu, cor_usu, doc_usu, con_usu)
                         VALUES (%s, %s, %s, %s, %s)
                     """, (nombres, apellidos, correo, numero_documento, password_md5))
                     conn.commit()
                     print("Nuevo usuario agregado correctamente")
-                    return 'success'      
+                    return 'success' 
+    # Si el método no es POST, renderizar el formulario de registro
+    return render_template('autenticacion_y_registro/registro.html')
+
 
 # Página principal
 @app.route('/inicio_principal')
@@ -108,15 +108,15 @@ def inicio_principal():
     user_id = session.get('user_id')    
     if user_id is None:
         # Si el usuario no ha iniciado sesión, redirigir a la página de inicio de sesión
-        return redirect(url_for('redirigir'))
-
+        return redirect(url_for('inicio_sesion'))    
     # Obtener más información del usuario a partir de su ID
     with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(f'SELECT id_usu FROM usuario WHERE id_usu={user_id} ;')
-                user = cur.fetchone()
+        with conn.cursor() as cur:
+            # Ejecutar una consulta SQL para obtener el ID del usuario
+            cur.execute(f'SELECT id_usu FROM usuario WHERE id_usu={user_id};')
+            user = cur.fetchone()    
+    # Renderizar la plantilla HTML de la página principal y pasar los datos del usuario
     return render_template('autenticacion_y_registro/pagina principal.html', user=user)
-
 
 #Cerrar Sesion        
 @app.route('/logout')
@@ -124,28 +124,71 @@ def logout():
     # Borrar la información de la sesión
     session.clear()
     # Redireccionar a la página de inicio o a donde prefieras
-    return redirect(url_for('redirigir'))  
+    return redirect(url_for('inicio_sesion'))  
 
-#editar perfil
-@app.route('/edit_profile')
+# Ruta para editar el perfil del usuario
+@app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile(): 
+    if request.method == 'POST':
+        print("entro")        
+        # Obtener el ID del usuario de la sesión
+        id_usu = session.get('user_id')        
+        # Obtener los datos del formulario
+        cor_usu = request.form['cor_usu']
+        password = request.form['con_usu']         
+        # Conectar a la base de datos
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                # Verificar si ya existe otro usuario con el mismo correo electrónico
+                cur.execute("""
+                    SELECT cor_usu FROM usuario WHERE cor_usu = %s AND id_usu != %s
+                """, (cor_usu, id_usu))
+                user_exis = cur.fetchone()                
+                if user_exis is None:
+                    # Obtener la información actual del usuario
+                    cur.execute(f"""SELECT cor_usu, con_usu FROM usuario WHERE id_usu={id_usu};""")
+                    user_data = cur.fetchone()                    
+                    # Actualizar el correo electrónico del usuario
+                    cur.execute('''
+                        UPDATE usuario
+                        SET cor_usu = %s
+                        WHERE id_usu = %s
+                    ''', (cor_usu, id_usu))                    
+                    # Actualizar la contraseña si no es el valor por defecto
+                    if password != "***************":
+                        # Codificar la nueva contraseña en MD5
+                        password_md5 = hashlib.md5(password.encode()).hexdigest()
+                        cur.execute('''
+                            UPDATE usuario
+                            SET con_usu = %s
+                            WHERE id_usu = %s
+                        ''', (password_md5, id_usu))                    
+                    # Redirigir con un mensaje de éxito
+                    success = '1'
+                    return redirect(url_for('edit_profile', success=success))
+                else:
+                    # Redirigir con un mensaje de error si el correo ya está en uso
+                    error = '2'
+                    return redirect(url_for('edit_profile', error=error))
+    
+    # Si el método no es POST
     success = request.args.get('success')
-    error = request.args.get('error')
-    user_id = session.get('user_id')
-
+    error = request.args.get('error')    
+    # Obtener el ID del usuario de la sesión
+    user_id = session.get('user_id')    
     if user_id is None:
         # Si el usuario no ha iniciado sesión, redirigir a la página de inicio de sesión
-        return redirect(url_for('redirigir'))
-    
-    # Obtener más información del usuario a partir de su ID
+        return redirect(url_for('inicio_sesion'))    
+    # Conectar a la base de datos
     with get_db_connection() as conn:
         with conn.cursor() as cur:
+            # Obtener la información del usuario
             cur.execute(f"""SELECT u.nom_usu, u.ape_usu, u.doc_usu, u.cor_usu, u.con_usu, r.tip_rol 
-            FROM usuario u JOIN roles r ON u.id_rol=r.id_rol
-            WHERE u.id_usu={user_id} ;""")
+            FROM usuario u JOIN roles r ON u.id_rol = r.id_rol
+            WHERE u.id_usu = {user_id};""")
             user_data = cur.fetchone()
-            print(user_data)
-            # Si se encontró al usuario, asignar datos
+            print(user_data)            
+            # Si se encontró al usuario, asignar los datos
             if user_data:
                 user = {
                     "nom_usu": user_data[0],
@@ -154,63 +197,21 @@ def edit_profile():
                     "cor_usu": user_data[3],
                     "con_usu": user_data[4],
                     "tip_rol": user_data[5],
-                    "id_usu":user_id
-                }
-
+                    "id_usu": user_id
+                }            
             # Renderizar el template con los datos del usuario y los mensajes de éxito/error
             if success == "1" or error == "2":
                 return render_template('autenticacion_y_registro/edit_profile.html', success=success, error=error, user=user)
             else:
                 return render_template('autenticacion_y_registro/edit_profile.html', user=user)
 
-
-#editar perfil guardado
-@app.route('/edit_profile_save', methods=['POST'])
-def edit_profile_save():  
-    print("entro")       
-    id_usu = session.get('user_id')
-    cor_usu = request.form['cor_usu']
-    password = request.form['con_usu'] 
-    # Obtener más información del usuario a partir de su ID
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT cor_usu FROM usuario WHERE cor_usu  = %s AND id_usu!= %s
-            """, (cor_usu, id_usu))
-            user_exis = cur.fetchone()
-            if user_exis is None:
-                cur.execute(f"""SELECT cor_usu, con_usu  FROM usuario 
-                WHERE id_usu={id_usu} ;""")
-                # Actualizar valores del usuario
-                user_data = cur.fetchone()
-                cur.execute('''
-                        UPDATE usuario
-                        SET cor_usu = %s
-                        WHERE id_usu = %s
-                    ''', (cor_usu, id_usu))
-
-                if password != "***************":
-                    # Encriptar la contraseña ingresada con bcrypt
-                    password_md5 = hashlib.md5(password.encode()).hexdigest()
-                    cur.execute('''
-                        UPDATE usuario
-                        SET con_usu = %s
-                        WHERE id_usu = %s
-                    ''', (password_md5, id_usu))
-
-                success='1'                                  
-                return redirect(url_for('edit_profile',success=success ))
-            else:
-                error='2' 
-                return redirect(url_for('edit_profile',error=error ))
-    
-
+#Conexcion davis con API
 @app.route('/irradiance_display')
 def irradiance_display():
     user_id = session.get('user_id')
     if user_id is None:
         # Si el usuario no ha iniciado sesión, redirigir a la página de inicio de sesión
-        return redirect(url_for('redirigir'))  
+        return redirect(url_for('inicio_sesion'))  
     
     # Reemplaza con tu clave de API y el ID de la estación
     API_KEY = "jxhpskyfalmhlegx9mwqnwplcpmoltc0"
@@ -261,7 +262,7 @@ def irradiance_display():
                             if isinstance(tz_offset, int):
                                 tz_offset = tz_offset / 3600
 
-                            # Convert timestamp to datetime with time
+                            # Convertir marca de tiempo a fecha y hora con hora
                             timestamp_utc = datetime.datetime.fromtimestamp(ts)
                             offset_hours = tz_offset / 3600
                             timestamp_local = timestamp_utc + datetime.timedelta(hours=offset_hours)
@@ -283,6 +284,7 @@ def irradiance_display():
         context['error_message'] = f"No se pudieron obtener los datos de irradiancia: {e}"
 
     return render_template('informe_y_Estadistica/date_davis.html', **context)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
