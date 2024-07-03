@@ -11,7 +11,8 @@ console.log('Conectado a script');
 
 //INICIO DE SESION
 $(document).ready(function() {
-    $('#login-form').submit(function(e) {
+    // Primero, eliminamos cualquier evento submit previo registrado
+    $('#login-form').off('submit').on('submit', function(e) {
         e.preventDefault();
 
         $.ajax({
@@ -20,11 +21,11 @@ $(document).ready(function() {
             data: $(this).serialize(),
             success: function(response) {
                 if (response === 'error') {
-                    console.log("error")
-                        //Alerta por si el correo y contraseña estan mal
+                    console.log("error");
+                    // Alerta por si el correo y contraseña están mal
                     $('#alertContainer').html('<div class="alert alert-danger">Verifica tu correo o contraseña.</div>');
                 } else if (response === 'success') {
-                    console.log("login")
+                    console.log("login");
                     window.location.href = '/inicio_principal';
                 }
             },
@@ -36,9 +37,11 @@ $(document).ready(function() {
     });
 });
 
+
 //REGISTRO DE CUENTA
 $(document).ready(function() {
-    $('#registro-form').submit(function(event) {
+    // Primero, eliminamos cualquier evento submit previo registrado
+    $('#registro-form').off('submit').on('submit', function(event) {
         // Evita el envío del formulario predeterminado
         event.preventDefault();
 

@@ -126,6 +126,84 @@ def logout():
     # Redireccionar a la página de inicio o a donde prefieras
     return redirect(url_for('redirigir'))  
 
+#editar perfil
+@app.route('/edit_profile')
+def edit_profile(): 
+    success = request.args.get('success')
+    error = request.args.get('error')
+    user_id = session.get('user_id')
+
+    if user_id is None:
+        # Si el usuario no ha iniciado sesión, redirigir a la página de inicio de sesión
+        return redirect(url_for('redirigir'))
+    
+    # Obtener más información del usuario a partir de su ID
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"""SELECT u.nom_usu, u.ape_usu, u.doc_usu, u.cor_usu, u.con_usu, r.tip_rol 
+            FROM usuario u JOIN roles r ON u.id_rol=r.id_rol
+            WHERE u.id_usu={user_id} ;""")
+            user_data = cur.fetchone()
+            print(user_data)
+            # Si se encontró al usuario, asignar datos
+            if user_data:
+                user = {
+                    "nom_usu": user_data[0],
+                    "ape_usu": user_data[1],
+                    "doc_usu": user_data[2],
+                    "cor_usu": user_data[3],
+                    "con_usu": user_data[4],
+                    "tip_rol": user_data[5],
+                    "id_usu":user_id
+                }
+
+            # Renderizar el template con los datos del usuario y los mensajes de éxito/error
+            if success == "1" or error == "2":
+                return render_template('autenticacion_y_registro/edit_profile.html', success=success, error=error, user=user)
+            else:
+                return render_template('autenticacion_y_registro/edit_profile.html', user=user)
+
+
+#editar perfil guardado
+@app.route('/edit_profile_save', methods=['POST'])
+def edit_profile_save():  
+    print("entro")       
+    id_usu = session.get('user_id')
+    cor_usu = request.form['cor_usu']
+    password = request.form['con_usu'] 
+    # Obtener más información del usuario a partir de su ID
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT cor_usu FROM usuario WHERE cor_usu  = %s AND id_usu!= %s
+            """, (cor_usu, id_usu))
+            user_exis = cur.fetchone()
+            if user_exis is None:
+                cur.execute(f"""SELECT cor_usu, con_usu  FROM usuario 
+                WHERE id_usu={id_usu} ;""")
+                # Actualizar valores del usuario
+                user_data = cur.fetchone()
+                cur.execute('''
+                        UPDATE usuario
+                        SET cor_usu = %s
+                        WHERE id_usu = %s
+                    ''', (cor_usu, id_usu))
+
+                if password != "***************":
+                    # Encriptar la contraseña ingresada con bcrypt
+                    password_md5 = hashlib.md5(password.encode()).hexdigest()
+                    cur.execute('''
+                        UPDATE usuario
+                        SET con_usu = %s
+                        WHERE id_usu = %s
+                    ''', (password_md5, id_usu))
+
+                success='1'                                  
+                return redirect(url_for('edit_profile',success=success ))
+            else:
+                error='2' 
+                return redirect(url_for('edit_profile',error=error ))
+    
 
 @app.route('/irradiance_display')
 def irradiance_display():
