@@ -21,7 +21,7 @@
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item" href="/edit_profile">Editar Perfil</a></li>
                     {% if 'user_rol' in session and session['user_rol'] == 'Administrador' %}
-                    <li><a class="dropdown-item" href="#">Usuarios</a></li>
+                    <li><a class="dropdown-item" href="/update_user">Usuarios</a></li>
                     {% endif%}
                 </ul>
             </li>
