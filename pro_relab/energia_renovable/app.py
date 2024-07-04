@@ -201,66 +201,64 @@ def edit_profile():
             else:
                 return render_template('autenticacion_y_registro/edit_profile.html', user=user)
 
-#list  usuarios
 @app.route('/update_user', methods=['GET', 'POST'])
 def update_user():
-    if request.method == 'POST':
-        user_id = session.get('user_id')
-        id_usu = int(request.form['id_usu'])
-        nom_usu = request.form['nom_usu']
-        ape_usu = request.form['ape_usu']
-        per_usu = request.form['per_usu']
-        doc_usu = request.form['doc_usu']
-        id_rol = request.form['rol_usu']
+    if request.method == 'POST':  # Verifica si la solicitud es POST
+        user_id = session.get('user_id')  # Obtiene el ID del usuario autenticado de la sesión
+        id_usu = int(request.form['id_usu'])  # Obtiene el ID del usuario del formulario
+        nom_usu = request.form['nom_usu']  # Obtiene el nombre del usuario del formulario
+        ape_usu = request.form['ape_usu']  # Obtiene el apellido del usuario del formulario
+        per_usu = request.form['per_usu']  # Obtiene el perfil del usuario del formulario
+        doc_usu = request.form['doc_usu']  # Obtiene el documento del usuario del formulario
+        id_rol = request.form['rol_usu']  # Obtiene el rol del usuario del formulario
                 
         # Conectar a la base de datos y actualizar el usuario
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
+        with get_db_connection() as conn:  # Abre una conexión a la base de datos
+            with conn.cursor() as cur:  # Crea un cursor para ejecutar las consultas
                 # Verificar si el usuario es diferente del usuario autenticado
-                if id_usu != user_id:
-                    cur.execute('UPDATE usuario SET per_usu = %s WHERE id_usu = %s;', (per_usu, id_usu))
+                if id_usu != user_id:  # Si el ID del usuario del formulario no es el mismo que el ID del usuario autenticado
+                    cur.execute('UPDATE usuario SET per_usu = %s WHERE id_usu = %s;', (per_usu, id_usu))  # Actualiza el perfil del usuario
                 
                 cur.execute('''
                     UPDATE usuario 
                     SET nom_usu = %s, ape_usu = %s, doc_usu = %s, id_rol = %s 
                     WHERE id_usu = %s;
-                ''', (nom_usu, ape_usu, doc_usu, id_rol, id_usu))
+                ''', (nom_usu, ape_usu, doc_usu, id_rol, id_usu))  # Actualiza los datos del usuario
                 
-                conn.commit()  # Guardar cambios en la base de datos
+                conn.commit()  # Guarda cambios en la base de datos
         
-        success = '1'
-        return redirect(url_for('update_user', success=success))
+        success = '1'  # Establece un indicador de éxito
+        return redirect(url_for('update_user', success=success))  # Redirige a la misma página con el indicador de éxito
 
-    success = request.args.get('success')
-    error = request.args.get('error')
-    user_id = session.get('user_id')
-    if user_id is None:
-        # Si el usuario no ha iniciado sesión, redirigir a la página de inicio de sesión
-        return redirect(url_for('redirigir'))   
+    success = request.args.get('success')  # Obtiene el indicador de éxito de los parámetros de la URL
+    error = request.args.get('error')  # Obtiene el indicador de error de los parámetros de la URL
+    user_id = session.get('user_id')  # Obtiene el ID del usuario autenticado de la sesión
+    if user_id is None:  # Si el usuario no ha iniciado sesión
+        return redirect(url_for('redirigir'))  # Redirige a la página de inicio de sesión   
     
     # Obtener más información del usuario a partir de su ID
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute('SELECT per_usu FROM usuario WHERE id_usu = %s;', (user_id,))
-            user = cur.fetchone()
+    with get_db_connection() as conn:  # Abre una conexión a la base de datos
+        with conn.cursor() as cur:  # Crea un cursor para ejecutar las consultas
+            cur.execute('SELECT per_usu FROM usuario WHERE id_usu = %s;', (user_id,))  # Obtiene el perfil del usuario autenticado
+            user = cur.fetchone()  # Obtiene el resultado de la consulta
                         
-            if user[0] == 'Administrador':
+            if user[0] == 'Administrador':  # Si el usuario autenticado es un Administrador
                 cur.execute('''
                     SELECT * FROM roles;
-                ''')
-                rol = cur.fetchall()
+                ''')  # Obtiene todos los roles
+                rol = cur.fetchall()  # Obtiene todos los resultados de la consulta
                 cur.execute('''
                     SELECT * FROM usuario
                     JOIN roles ON usuario.id_rol = roles.id_rol;
-                ''')
-                edit_usu = cur.fetchall()
+                ''')  # Obtiene todos los usuarios y sus roles
+                edit_usu = cur.fetchall()  # Obtiene todos los resultados de la consulta
                 
-                if success == "1" or error == "2":
-                    return render_template('autenticacion_y_registro/edit_user.html', success=success, error=error,rol=rol, edit_usu=edit_usu)
+                if success == "1" or error == "2":  # Si hay un indicador de éxito o error
+                    return render_template('autenticacion_y_registro/edit_user.html', success=success, error=error, rol=rol, edit_usu=edit_usu)  # Renderiza la plantilla con los datos obtenidos
                 else:
-                    return render_template('autenticacion_y_registro/edit_user.html', rol=rol,edit_usu=edit_usu)
+                    return render_template('autenticacion_y_registro/edit_user.html', rol=rol, edit_usu=edit_usu)  # Renderiza la plantilla con los datos obtenidos
             else:
-                return redirect(url_for('inicio_principal'))
+                return redirect(url_for('inicio_principal'))  # Si el usuario no es Administrador, redirige a la página principal
 
 #Conexcion davis con API
 @app.route('/irradiance_display')
