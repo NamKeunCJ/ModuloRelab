@@ -15,7 +15,7 @@ app.config['SECRET_KEY'] = 'unicesmag'
 
 # Configurar los parámetros de la base de datos
 app.config['DB_HOST'] = 'localhost'  # El host donde se encuentra la base de datos
-app.config['DB_NAME'] = 'energia_renovable'  # El nombre de la base de datos
+app.config['DB_NAME'] = 'modulo_relab'  # El nombre de la base de datos
 app.config['DB_USER'] = 'postgres'  # El usuario de la base de datos
 app.config['DB_PASSWORD'] = 'unicesmag'  # La contraseña del usuario de la base de datos
 
@@ -260,7 +260,6 @@ def update_user():
             else:
                 return redirect(url_for('inicio_principal'))  # Si el usuario no es Administrador, redirige a la página principal
 
-#Conexcion davis con API
 @app.route('/irradiance_display')
 def irradiance_display():
     user_id = session.get('user_id')
@@ -291,8 +290,6 @@ def irradiance_display():
     # Establece el encabezado del secreto de la API
     headers = {"X-Api-Secret": "sxchcxmtchcydblvcgbknst9mumap1cq"}  # Reemplaza con tu secreto de API real
 
-    context = {'irradiance_data': []}  # Inicializa context con una lista vacía por defecto
-
     try:
         # Envía una solicitud HTTP GET
         response = requests.get(url, headers=headers)
@@ -303,6 +300,7 @@ def irradiance_display():
 
             if isinstance(data.get('sensors'), list):
                 irradiance_data = [] 
+                db_data = []
                 for sensor_data in data['sensors']:
                     if isinstance(sensor_data.get('data'), list):
                         for inner_data in sensor_data['data']:
@@ -321,7 +319,7 @@ def irradiance_display():
                             timestamp_utc = datetime.datetime.fromtimestamp(ts)
                             offset_hours = tz_offset / 3600
                             timestamp_local = timestamp_utc + datetime.timedelta(hours=offset_hours)
-                            date_time_string = timestamp_local.strftime("%Y-%m-%d %H:%M:%S %p")
+                            date_time_string = timestamp_local.strftime("%Y-%m-%d %H:%M:%S")
 
                             # Agrega los datos a la lista
                             irradiance_data.append({
@@ -331,14 +329,47 @@ def irradiance_display():
                                 "solar_energy": solar_radiation_ene
                             })
 
-                # Asigna irradiance_data al contexto
-                context['irradiance_data'] = irradiance_data
+                            # Agrega los datos a la lista para la base de datos
+                            db_data.append((                                
+                                solar_radiation_avg,
+                                solar_radiation_hi, 
+                                date_time_string,                               
+                                user_id
+                            ))
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-        context['error_message'] = f"No se pudieron obtener los datos de irradiancia: {e}"
+                with get_db_connection() as conn:
+                    with conn.cursor() as cursor:
+                        for data in db_data:
+                            prom_irr, max_irr, created_at, id_usu = data
+                            
+                            # Verifica si el dato ya existe
+                            search_query = """
+                                SELECT 1 FROM dato_irradiancia 
+                                WHERE prom_irr = %s AND max_irr = %s AND created_at = %s AND id_usu = %s
+                            """
+                            cursor.execute(search_query, (prom_irr, max_irr, created_at, id_usu))
+                            if cursor.fetchone() is None:
+                                # Inserta el dato si no existe
+                                insert_query = """
+                                    INSERT INTO dato_irradiancia (
+                                        prom_irr, max_irr, created_at, id_usu
+                                    ) VALUES (%s, %s, %s, %s)
+                                """
+                                cursor.execute(insert_query, data)
+                            conn.commit()
 
-    return render_template('informe_y_Estadistica/date_davis.html', **context)
+        # Obtener más información del usuario a partir de su ID
+        with get_db_connection() as conn:  # Abre una conexión a la base de datos
+            with conn.cursor() as cur:  # Crea un cursor para ejecutar las consultas
+                cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia')  # Obtiene el perfil del usuario autenticado
+                db_irr = cur.fetchall()  # Obtiene todos los resultados de la consulta
+                        
+    
+    except requests.RequestException as e:
+        # Manejo de errores para la solicitud de la API
+        print(f"Error al solicitar los datos de la API: {e}")
+    
+    return render_template('informe_y_Estadistica/date_davis.html', db_irr = db_irr)
 
 
 if __name__ == '__main__':

@@ -57,7 +57,7 @@
                         <td>{{usuario[4]}}</td>
                         <td>{{usuario[5]}}</td>
                         <td>{{usuario[3]}}</td>
-                        <td>{{usuario[9]}}</td>
+                        <td>{{usuario[13]}}</td>
                         <td><button type="button" style="color: rgb(47, 133, 204);" id="edit{{usuario[0]}}" class="btn icon" data-bs-toggle="modal" data-bs-target="#editar_usuario_{{usuario[0]}}"><i class="bi bi-pencil-square"></i></button></td>
                     </tr>
                     <div class="modal fade" id="editar_usuario_{{usuario[0]}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -99,7 +99,7 @@
                                         <div class="form-group" style="margin-top: 1rem;">
                                             <label for="rol_usu"><h6><b>Rol que desempeña el usuario:</b></h6></label>
                                             <select class="form-control" id="rol_usu" name="rol_usu" required>
-                                              <option value="{{usuario[8]}}" selected>{{usuario[9]}}</option>
+                                              <option value="{{usuario[12]}}" selected>{{usuario[13]}}</option>
                                               {% for rol in rol %}
                                                   <option value="{{ rol[0]}}">{{rol[1]}}</option>
                                               {% endfor %}
