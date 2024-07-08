@@ -356,19 +356,18 @@ def irradiance_display():
                                     ) VALUES (%s, %s, %s, %s)
                                 """
                                 cursor.execute(insert_query, data)
-                            conn.commit()
-
-        # Obtener más información del usuario a partir de su ID
-        with get_db_connection() as conn:  # Abre una conexión a la base de datos
-            with conn.cursor() as cur:  # Crea un cursor para ejecutar las consultas
-                cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia')  # Obtiene el perfil del usuario autenticado
-                db_irr = cur.fetchall()  # Obtiene todos los resultados de la consulta
-                        
+                            conn.commit()  
     
     except requests.RequestException as e:
         # Manejo de errores para la solicitud de la API
         print(f"Error al solicitar los datos de la API: {e}")
-    
+
+    # Obtener más información de los datos tomados con la estacion
+    with get_db_connection() as conn:  # Abre una conexión a la base de datos
+        with conn.cursor() as cur:  # Crea un cursor para ejecutar las consultas
+            cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia')  # Obtiene eel promedio de irradiancia, maxima irradiancia y la fecha de creacion
+            db_irr = cur.fetchall()  # Obtiene todos los resultados de la consulta
+            
     return render_template('informe_y_Estadistica/date_davis.html', db_irr = db_irr)
 
 
