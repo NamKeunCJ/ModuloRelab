@@ -1,7 +1,11 @@
 {% block head %} {% include 'layouts/head.html' %} {% endblock %}
 <script>
+    var lastData = null;
+    var table;
+
     $(function() {
-        $('#tabla').DataTable({
+        // Inicializa DataTable y guarda la referencia
+        table = $('#tabla').DataTable({
             "language": {
                 "emptyTable": "No hay datos disponibles en la tabla",
                 "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
@@ -21,9 +25,38 @@
             },
             "order": [
                 [0, "desc"]
-            ],
+            ]
         });
     });
+
+    function updateTable() {
+        $.ajax({
+            url: '/get_latest_irradiance_data',
+            type: 'GET',
+            success: function(data) {
+                if (data && !areObjectsEqual(data, lastData)) {
+                    if (lastData === null) {
+                        lastData = data; // Actualiza lastData
+                    } else {
+                        // Actualiza la DataTable con los nuevos datos
+                        data.forEach(function(item) {
+                            var newRow = [item.created_at, item.prom_irr, item.max_irr];
+                            table.row.add(newRow).draw(false);
+                        });
+                        lastData = data; // Actualiza lastData
+                    }
+                }
+            }
+        });
+    }
+
+    function areObjectsEqual(obj1, obj2) {
+        // Compara los objetos para verificar si son iguales
+        return JSON.stringify(obj1) === JSON.stringify(obj2);
+    }
+
+    // Llama a la función updateTable periódicamente
+    setInterval(updateTable, 10000); // Configura el intervalo para que coincida con la frecuencia de actualización de tus datos
 </script>
 
 <body class="body-inicio">
@@ -53,6 +86,7 @@
                                 {% endfor %}
                             </tbody>
                         </table>
+                        
                         {% else %}
                         <p class="text-danger ">Error: No se encontraron datos de irradiancia.</p>
                         {% endif %}
