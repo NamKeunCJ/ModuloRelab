@@ -261,106 +261,93 @@ def update_user():
             else:
                 return redirect(url_for('inicio_principal'))  # Si el usuario no es Administrador, redirige a la página principal
 
-def davis():    
+def davis():
     while True:
         print("Dato recibido")
         user_id = 1
-        # Reemplaza con tu clave de API y el ID de la estación
         API_KEY = "jxhpskyfalmhlegx9mwqnwplcpmoltc0"
-        STATION_ID = "181874"  # Puedes usar un ID entero o un UUID
+        STATION_ID = "181874"
+        headers = {"X-Api-Secret": "sxchcxmtchcydblvcgbknst9mumap1cq"}
 
-        # Establece la hora de inicio deseada (ajústala según sea necesario)
-        start_date = f"{date.today()} 01:00:00"  # Ejemplo de fecha y hora
+        # Fecha actual
+        end_timestamp = int(time.time())
+        print("End timestamp:", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_timestamp)))
 
-        # Convierte la hora de inicio a una marca de tiempo Unix
-        start_timestamp = int(time.mktime(time.strptime(start_date, "%Y-%m-%d %H:%M:%S")))
+        # Rango de 6 meses en segundos
+        six_months_seconds = 30 * 24 * 3600  # Aproximadamente 6 meses (considerando un mes como 30 días)
 
-        # Calcula la duración deseada (ajústala según sea necesario)
-        duration_seconds = 3600*24  # Una hora en segundos (modifica según tus necesidades)
+        # Calcula la fecha de inicio
+        start_timestamp = end_timestamp - six_months_seconds
+        print("Start timestamp:", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_timestamp)))
 
-        # Calcula la marca de tiempo de finalización basada en la duración
-        end_timestamp = start_timestamp + duration_seconds
+        # Intervalo máximo permitido por la API
+        max_duration_seconds = 86400
 
-        # Construye la URL de solicitud de la API
-        base_url = "https://api.weatherlink.com/v2/historic"
-        url = f"{base_url}/{STATION_ID}?api-key={API_KEY}&start-timestamp={start_timestamp}&end-timestamp={end_timestamp}"
+        # Iterar sobre el rango de 6 meses en intervalos de un día
+        current_end_timestamp = end_timestamp
+        while current_end_timestamp > start_timestamp:
+            current_start_timestamp = max(current_end_timestamp - max_duration_seconds, start_timestamp)            
+            base_url = "https://api.weatherlink.com/v2/historic"
+            url = f"{base_url}/{STATION_ID}?api-key={API_KEY}&start-timestamp={current_start_timestamp}&end-timestamp={current_end_timestamp}"
 
-        # Establece el encabezado del secreto de la API
-        headers = {"X-Api-Secret": "sxchcxmtchcydblvcgbknst9mumap1cq"}  # Reemplaza con tu secreto de API real
+            try:
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    if isinstance(data.get('sensors'), list):
+                        irradiance_data = [] 
+                        db_data = []
+                        for sensor_data in data['sensors']:
+                            if isinstance(sensor_data.get('data'), list):
+                                for inner_data in sensor_data['data']:
+                                    solar_radiation_avg = inner_data.get('solar_rad_avg')
+                                    solar_radiation_hi = inner_data.get('solar_rad_hi')
+                                    solar_radiation_ene = inner_data.get('solar_energy')
+                                    date_time_string = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(inner_data.get('ts')))
 
-        try:
-            # Envía una solicitud HTTP GET
-            response = requests.get(url, headers=headers)
+                                    irradiance_data.append({
+                                        "date_time": date_time_string,
+                                        "avg_irradiance": solar_radiation_avg,
+                                        "highest_irradiance": solar_radiation_hi,
+                                        "solar_energy": solar_radiation_ene
+                                    })
 
-            # Verifica si la respuesta fue exitosa (código de estado 200)
-            if response.status_code == 200:
-                data = response.json()
+                                    db_data.append((                                
+                                        solar_radiation_avg,
+                                        solar_radiation_hi, 
+                                        date_time_string,                               
+                                        user_id
+                                    ))
 
-                if isinstance(data.get('sensors'), list):
-                    irradiance_data = [] 
-                    db_data = []
-                    for sensor_data in data['sensors']:
-                        if isinstance(sensor_data.get('data'), list):
-                            for inner_data in sensor_data['data']:
-                                # Extrae los datos
-                                solar_radiation_avg = inner_data.get('solar_rad_avg')
-                                solar_radiation_hi = inner_data.get('solar_rad_hi')
-                                solar_radiation_ene = inner_data.get('solar_energy')
-                                ts = inner_data.get('ts')
-                                tz_offset = inner_data.get('tz_offset')
+                        with get_db_connection() as conn:
+                            with conn.cursor() as cursor:
+                                for data in db_data:
+                                    prom_irr, max_irr, created_at, id_usu = data
 
-                                # Convierte la marca de tiempo a datetime con la hora
-                                if isinstance(tz_offset, int):
-                                    tz_offset = tz_offset / 3600
-
-                                # Convertir marca de tiempo a fecha y hora con hora
-                                timestamp_utc = datetime.fromtimestamp(ts)
-                                offset_hours = tz_offset / 3600
-                                timestamp_local = timestamp_utc + timedelta(hours=offset_hours)
-                                date_time_string = timestamp_local.strftime("%Y-%m-%d %H:%M:%S")
-
-                                # Agrega los datos a la lista
-                                irradiance_data.append({
-                                    "date_time": date_time_string,
-                                    "avg_irradiance": solar_radiation_avg,
-                                    "highest_irradiance": solar_radiation_hi,
-                                    "solar_energy": solar_radiation_ene
-                                })
-
-                                # Agrega los datos a la lista para la base de datos
-                                db_data.append((                                
-                                    solar_radiation_avg,
-                                    solar_radiation_hi, 
-                                    date_time_string,                               
-                                    user_id
-                                ))
-
-                    with get_db_connection() as conn:
-                        with conn.cursor() as cursor:
-                            for data in db_data:
-                                prom_irr, max_irr, created_at, id_usu = data
-
-                                # Verifica si el dato ya existe
-                                search_query = """
-                                    SELECT 1 FROM dato_irradiancia 
-                                    WHERE prom_irr = %s AND max_irr = %s AND created_at = %s AND id_usu = %s
-                                """
-                                cursor.execute(search_query, (prom_irr, max_irr, created_at, id_usu))
-                                if cursor.fetchone() is None:
-                                    # Inserta el dato si no existe
-                                    insert_query = """
-                                        INSERT INTO dato_irradiancia (
-                                            prom_irr, max_irr, created_at, id_usu
-                                        ) VALUES (%s, %s, %s, %s)
+                                    search_query = """
+                                        SELECT 1 FROM dato_irradiancia 
+                                        WHERE prom_irr = %s AND max_irr = %s AND created_at = %s AND id_usu = %s
                                     """
-                                    cursor.execute(insert_query, data)
-                                conn.commit()  
+                                    cursor.execute(search_query, (prom_irr, max_irr, created_at, id_usu))
+                                    if cursor.fetchone() is None:
+                                        insert_query = """
+                                            INSERT INTO dato_irradiancia (
+                                                prom_irr, max_irr, created_at, id_usu
+                                            ) VALUES (%s, %s, %s, %s)
+                                        """
+                                        cursor.execute(insert_query, data)
+                                    conn.commit()
 
-        except requests.RequestException as e:
-            # Manejo de errores para la solicitud de la API
-            print(f"Error al solicitar los datos de la API: {e}")
+                elif response.status_code == 400:
+                    print("Error 400: Solicitud incorrecta. Verifique los parámetros de la solicitud.")
+                    print(response.json())  # Imprimir el mensaje de error de la API para obtener más detalles
 
-        # Esperar un intervalo antes de la siguiente ejecución (por ejemplo, 5 minutos)
+            except requests.RequestException as e:
+                print(f"Error al solicitar los datos de la API: {e}")
+
+            # Actualiza el rango para la siguiente solicitud
+            current_end_timestamp = current_start_timestamp - 1
+
         time.sleep(300)
 
 # Crear un hilo para la función davis
