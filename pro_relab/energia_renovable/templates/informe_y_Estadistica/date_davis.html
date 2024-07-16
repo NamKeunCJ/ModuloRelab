@@ -79,7 +79,7 @@
                             <tbody>
                                 {% for db_irr in db_irr %}
                                 <tr>
-                                    <td>{{db_irr[2]}}</td>
+                                    <td class="time">{{db_irr[2]}}</td>
                                     <td class="avg_irradiance">{{db_irr[0]}}</td>
                                     <td class="highest_irradiance">{{db_irr[1]}}</td>
                                 </tr>
@@ -101,130 +101,164 @@
                 </div>
                 <canvas id="myChart" width="350" height="100"></canvas>
                 <script>
+                    // Inicialización de los arrays de datos
                     const irradianceData = [];
                     const highestIrradianceData = [];
                     const labels = [];
-
+            
+                    // Selección de las filas de la tabla
                     const tableRows = document.querySelectorAll('#tabla tbody tr');
-
-                    tableRows.forEach(row => {
-                        const avgIrradianceCell = row.querySelector('.avg_irradiance');
-                        const highestIrradianceCell = row.querySelector('.highest_irradiance');
-                        const irradianceValue = avgIrradianceCell ? parseFloat(avgIrradianceCell.textContent) : null;
-                        const highestIrradianceValue = highestIrradianceCell ? parseFloat(highestIrradianceCell.textContent) : null;
-                        const dateString = row.querySelector('td:first-child').textContent;
-                        const date = new Date(dateString);
-                        const label = date.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }); // Formatear solo la hora y los minutos
-
-
-                        if (irradianceValue !== null) {
-                            irradianceData.push(irradianceValue);
-                            labels.push(label);
-                        }
-
-                        if (highestIrradianceValue !== null) {
-                            highestIrradianceData.push(highestIrradianceValue);
-                        }
-                    });
-
-                    const ctx = document.getElementById('myChart').getContext('2d');
-
-
-                    let chart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                type: 'line',
-                                label: 'Irradiancia Promedio (W/m²)',
-                                data: irradianceData,
-                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                pointRadius: 0,
-                                pointHoverRadius: 5,
-                                pointHitRadius: 5,
-                                borderWidth: 2,
-                                tension: 0.2,
-                            }, {
-                                type: 'line',
-                                label: 'Irradiancia Máxima (W/m²)',
-                                data: highestIrradianceData,
-                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                pointRadius: 0,
-                                pointHoverRadius: 5,
-                                pointHitRadius: 5,
-                                borderWidth: 2,
-                                tension: 0.2,
-                            }]
-                        },
-                        options: {
-                            animation: {
-                                x: {
-                                    type: 'number',
-                                    easing: 'linear',
-                                    duration: 2000,
-                                    from: NaN,
-                                    delay(ctx) {
-                                        const delayBetweenPoints = 1000 / Math.max(irradianceData.length, highestIrradianceData.length);
-                                        if (ctx.datasetIndex === 0) {
-                                            return ctx.index * delayBetweenPoints;
-                                        } else {
-                                            return 0;
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                yAxes: [{
-                                    ticks: {
-                                        beginAtZero: true
-                                    }
-                                }]
-                            }
-                        }
-                    });
-
-                    document.getElementById('filterButton').addEventListener('click', () => {
-                        const selectedDate = document.getElementById('dateSelector').value;
-                        if (selectedDate) {
-                            const filteredLabels = [];
-                            const filteredIrradianceData = [];
-                            const filteredHighestIrradianceData = [];
-
-                            tableRows.forEach(row => {
-                                const label = row.querySelector('td:first-child').textContent;
-                                const date = new Date(label);
-                                const dateString = date.toISOString().split('T')[0]; // Convertir a formato YYYY-MM-DD
-
-                                if (dateString === selectedDate) {
+            
+                    // Función para filtrar datos por fecha y hora
+                    function filterDataByDateAndTime(dateString) {
+                        const filteredLabels = [];
+                        const filteredIrradianceData = [];
+                        const filteredHighestIrradianceData = [];
+            
+                        tableRows.forEach(row => {
+                            const labelCell = row.querySelector('.time');
+                            const label = labelCell ? labelCell.textContent : '';
+                            const date = new Date(label);
+                            const formattedDate = date.toISOString().split('T')[0]; // Convertir a formato YYYY-MM-DD
+            
+                            if (formattedDate === dateString) {
+                                const hours = date.getHours();
+                                // Filtrar datos entre las 6 AM y las 7 PM (19:00)
+                                if (hours > 5 && hours <= 18) {
                                     const avgIrradianceCell = row.querySelector('.avg_irradiance');
                                     const highestIrradianceCell = row.querySelector('.highest_irradiance');
                                     const irradianceValue = avgIrradianceCell ? parseFloat(avgIrradianceCell.textContent) : null;
                                     const highestIrradianceValue = highestIrradianceCell ? parseFloat(highestIrradianceCell.textContent) : null;
-                                    const label = date.toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    }); // Formatear solo la hora y los minutos
-
+            
                                     if (irradianceValue !== null) {
                                         filteredIrradianceData.push(irradianceValue);
-                                        filteredLabels.push(label);
+                                        filteredLabels.push(date.toTimeString().substring(0, 5)); // Solo hora y minutos
                                     }
-
+            
                                     if (highestIrradianceValue !== null) {
                                         filteredHighestIrradianceData.push(highestIrradianceValue);
                                     }
                                 }
+                            }
+                        });
+            
+                        // Ordenar datos por hora
+                        const sortedData = filteredLabels.map((label, index) => ({
+                            label: label,
+                            avgIrradiance: filteredIrradianceData[index],
+                            highestIrradiance: filteredHighestIrradianceData[index] || null
+                        })).sort((a, b) => a.label.localeCompare(b.label));
+            
+                        return {
+                            labels: sortedData.map(data => data.label), // Usar hora como etiqueta
+                            irradianceData: sortedData.map(data => data.avgIrradiance),
+                            highestIrradianceData: sortedData.map(data => data.highestIrradiance)
+                        };
+                    }
+            
+                    // Función para crear o actualizar el gráfico
+                    function createOrUpdateChart(dateString) {
+                        const { labels: filteredLabels, irradianceData: filteredIrradianceData, highestIrradianceData: filteredHighestIrradianceData } = filterDataByDateAndTime(dateString);
+            
+                        const ctx = document.getElementById('myChart').getContext('2d');
+            
+                        const chartTitle = `Irradiancia - ${dateString}`;
+            
+                        if (window.chart) {
+                            // Actualizar gráfico existente
+                            window.chart.data.labels = filteredLabels;
+                            window.chart.data.datasets[0].data = filteredIrradianceData;
+                            window.chart.data.datasets[1].data = filteredHighestIrradianceData;
+                            window.chart.options.plugins.title.text = chartTitle; // Actualizar título
+                            window.chart.update();
+                        } else {
+                            // Crear nuevo gráfico
+                            window.chart = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: filteredLabels,
+                                    datasets: [{
+                                        type: 'line',
+                                        label: 'Irradiancia Promedio (W/m²)',
+                                        data: filteredIrradianceData,
+                                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                        borderColor: 'rgba(255, 99, 132, 1)',
+                                        pointRadius: 0,
+                                        pointHoverRadius: 5,
+                                        pointHitRadius: 5,
+                                        borderWidth: 2,
+                                        tension: 0.2,
+                                    }, {
+                                        type: 'line',
+                                        label: 'Irradiancia Máxima (W/m²)',
+                                        data: filteredHighestIrradianceData,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                        borderColor: 'rgba(54, 162, 235, 1)',
+                                        pointRadius: 0,
+                                        pointHoverRadius: 5,
+                                        pointHitRadius: 5,
+                                        borderWidth: 2,
+                                        tension: 0.2,
+                                    }]
+                                },
+                                options: {
+                                    animation: {
+                                        x: {
+                                            type: 'number',
+                                            easing: 'linear',
+                                            duration: 2000,
+                                            from: NaN,
+                                            delay(ctx) {
+                                                const delayBetweenPoints = 1000 / Math.max(filteredIrradianceData.length, filteredHighestIrradianceData.length);
+                                                if (ctx.datasetIndex === 0) {
+                                                    return ctx.index * delayBetweenPoints;
+                                                } else {
+                                                    return 0;
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            type: 'category',
+                                            title: {
+                                                display: true,
+                                                text: 'Hora del Día'
+                                            }
+                                        },
+                                        y: {
+                                            beginAtZero: true,
+                                            title: {
+                                                display: true,
+                                                text: 'Irradiancia (W/m²)'
+                                            }
+                                        }
+                                    },
+                                    plugins: {
+                                        title: {
+                                            display: true,
+                                            text: chartTitle, // Establecer título 
+                                            font: {
+                                                size: 24, // Tamaño de la fuente del título en píxeles
+                                                weight: 'bold', // Opcional: hacer el título en negrita
+                                                family: "'Helvetica Neue', 'Arial', sans-serif" // Opcional: especificar la familia de fuentes
+                                            }                                           
+                                        }
+                                    }
+                                }
                             });
-
-                            chart.data.labels = filteredLabels;
-                            chart.data.datasets[0].data = filteredIrradianceData;
-                            chart.data.datasets[1].data = filteredHighestIrradianceData;
-                            chart.update();
+                        }
+                    }
+            
+                    // Obtener la fecha de hoy y crear o actualizar el gráfico
+                    const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+                    createOrUpdateChart(today);
+            
+                    // Event listener para el botón de filtrado
+                    document.getElementById('filterButton').addEventListener('click', () => {
+                        const selectedDate = document.getElementById('dateSelector').value;
+                        if (selectedDate) {
+                            createOrUpdateChart(selectedDate);
                         }
                     });
                 </script>
