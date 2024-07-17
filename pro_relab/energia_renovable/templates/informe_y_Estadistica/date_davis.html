@@ -95,11 +95,19 @@
                 </div>
             </div>
             <div class="row" style="margin-bottom: 2rem;">
-                <div class="d-flex align-items-center" style="margin-bottom: 1rem;">
-                    <input type="date" class="form-control" style="width:16rem; margin-right: 1rem;" id="dateSelector" />
-                    <button id="filterButton" class="btn btn-primary">Filtrar</button>
+                <div class="container mt-4">
+                    <div class="row mb-2">
+                        <div class="d-flex align-items-center mb-1">
+                            <input type="date" class="form-control" style="width: 16rem; margin-right: 1rem;" id="dateSelector" />
+                            <button id="filterButton" class="btn btn-primary">Filtrar</button>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-sm-8">
+                            <canvas id="myChart" width="300" height="200"></canvas>
+                        </div>
+                    </div>
                 </div>
-                <canvas id="myChart" width="350" height="100"></canvas>
                 <script>
                     // Inicialización de los arrays de datos
                     const irradianceData = [];
