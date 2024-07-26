@@ -1,0 +1,78 @@
+{% block head %} {% include 'layouts/head.html' %} {% endblock %}
+<script>
+    $(function() {
+        // Inicializa DataTable y guarda la referencia
+        table = $('#tabla').DataTable({
+            "language": {
+                "emptyTable": "No hay datos disponibles en la tabla",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
+                "infoEmpty": "Mostrando 0 a 0 de 0 entradas",
+                "infoFiltered": "(filtrado de _MAX_ entradas totales)",
+                "lengthMenu": "Mostrar _MENU_ entradas",
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "search": "Buscar:",
+                "zeroRecords": "No se encontraron registros coincidentes",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                }
+            },
+            "order": [
+                [0, "desc"]
+            ]
+        });
+    });
+    </script>
+
+<body class="body-inicio">
+    {% block navbar %} {% include 'layouts/navbar.html' %} {% endblock %}
+    <section class="align-items-center justify-content-center">
+        <div class="container" data-aos="fade-up">
+            <form action="/demand_display" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="file">Seleccione el archivo Excel:</label>
+                    <input type="file" class="form-control-file" id="file" name="file" accept=".xlsx" required>
+                    <button type="submit" class="btn btn-primary">Subir</button>
+                </div>                            
+            </form>
+            <div class="card card-dimension " style="margin: 1rem;height: 80vh;overflow: auto; border-color: black;">
+                <div class="card-body">
+                    <div class="container-fluid">
+                        <h2>Datos de Irradiancia - Davis</h2>
+                        {% if db_dem is not none %}
+                        <table id="tabla" class="table table-responsive ">
+                            <thead>
+                                <tr>
+                                    <th>Fecha y Hora</th>
+                                    <th>Demanda Energetica</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for db_dem in db_dem %}
+                                <tr>
+                                    <td class="time">{{db_dem[1]}}</td>
+                                    <td class="dat_demand">{{db_dem[0]}}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                        {% else %}
+                        <p class="text-danger ">Error: No se encontraron datos de irradiancia.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts "></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js "></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/datatables.js"></script>
+    <script src="/static/js/scripts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+</body>

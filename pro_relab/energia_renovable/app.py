@@ -6,6 +6,7 @@ import threading
 import time
 import requests # elementos para datos davis
 import xml.etree.ElementTree as ET # elementos para datos davis
+import pandas as pd #Extrer los datos del archivo plano
 
 
 # Crear una instancia de la aplicación Flask
@@ -386,6 +387,57 @@ def get_latest_irradiance_data():
     data = [{'prom_irr': f"{float(row[0]):.1f}", 'max_irr': f"{float(row[1]):.1f}", 'created_at': row[2].strftime('%Y-%m-%d %H:%M:%S')} for row in db_irr]
     
     return jsonify(data)  # Devuelve los datos en formato JSON
+
+@app.route('/demand_display', methods=['GET', 'POST'])
+def demand_display():
+    user_id = session.get('user_id')
+    if user_id is None:
+        return redirect(url_for('inicio_sesion'))
+    
+    # Obtener más información de los datos tomados con el HIOKI
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT dat_dem, created_at FROM dato_demanda')
+            db_dem = cur.fetchall()
+
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and file.filename.endswith('.xlsx'):
+            try:
+                # Leer el archivo Excel directamente desde el objeto file
+                df_modelo = pd.read_excel(file, sheet_name='97intvl', header=0)
+            except ValueError as e:
+                # Captura el error si la hoja no existe
+                print(f"Error al leer la hoja: {e}")
+                return render_template('informe_y_Estadistica/date_hioki.html')
+            # Unir las columnas 'Date' y 'Time' en un solo campo datetime
+            df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str), format='%Y-%m-%d %H:%M:%S')
+            # Extraer solo las columnas específicas
+            columnas = ['Datetime', 'AvePsum']
+            data_to_insert = df_modelo[columnas].values.tolist()  # Convertir DataFrame a una lista de listas
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    for data in data_to_insert:  # Itera sobre los datos a insertar en la base de datos
+                        date_time, ave_psum = data  # Descompone los datos en variables
+                        # Consulta SQL para verificar si el dato ya existe
+                        search_query = """
+                            SELECT 1 FROM dato_demanda
+                            WHERE dat_dem = %s AND created_at = %s AND id_usu = %s
+                        """
+                        cursor.execute(search_query, (ave_psum, date_time, user_id))  # Ejecuta la consulta de búsqueda
+                        if cursor.fetchone() is None:
+                            # Consulta SQL para insertar el nuevo dato
+                            insert_query = """
+                                INSERT INTO dato_demanda (
+                                    dat_dem, created_at, id_usu
+                                ) VALUES (%s, %s, %s)
+                            """
+                            cursor.execute(insert_query, (ave_psum, date_time, user_id))  # Ejecuta la consulta de inserción
+                        conn.commit()  # Guarda los cambios en la base de datos
+            return render_template('informe_y_Estadistica/date_hioki.html')
+        else:
+            return 'Invalid file format'
+    return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem)
 
 if __name__ == '__main__':
     app.run(debug=True)
