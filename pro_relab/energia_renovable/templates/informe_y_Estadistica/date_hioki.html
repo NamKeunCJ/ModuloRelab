@@ -2,7 +2,7 @@
 <script>
     $(function() {
         // Inicializa DataTable y guarda la referencia
-        table = $('#tabla').DataTable({
+        $('#tabla, #tabla2').DataTable({
             "language": {
                 "emptyTable": "No hay datos disponibles en la tabla",
                 "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
@@ -19,13 +19,10 @@
                     "next": "Siguiente",
                     "previous": "Anterior"
                 }
-            },
-            "order": [
-                [0, "desc"]
-            ]
+            }
         });
     });
-    </script>
+</script>
 
 <body class="body-inicio">
     {% block navbar %} {% include 'layouts/navbar.html' %} {% endblock %}
@@ -38,10 +35,11 @@
                     <button type="submit" class="btn btn-primary">Subir</button>
                 </div>                            
             </form>
-            <div class="card card-dimension " style="margin: 1rem;height: 80vh;overflow: auto; border-color: black;">
-                <div class="card-body">
-                    <div class="container-fluid">
-                        <h2>Datos de Irradiancia - Davis</h2>
+             
+            <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;">
+                <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto;">
+                    <div class="card-body">
+                        <h3>Datos Demanda</h3>
                         {% if db_dem is not none %}
                         <table id="tabla" class="table table-responsive ">
                             <thead>
@@ -59,13 +57,119 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                        
+                        {% else %}
+                        <p class="text-danger ">Error: No se encontraron datos de irradiancia.</p>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" style="margin-bottom: 2rem;">
+                <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto;">
+                    <div class="card-body">
+                        <h3>Analisis Datos Demanda</h3>
+                            {% if db_ana_dem is not none %}                        
+                            <table id="tabla" class="table table-responsive ">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha </th>
+                                        <th>Excedente</th>
+                                        <th>Consumo</th>
+                                        <th>Energia Perdida</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for db_ana_dem in db_ana_dem %}
+                                    <tr>
+                                        <td>{{db_ana_dem[0]}}</td>
+                                        <td>{{db_ana_dem[1]}}</td>
+                                        <td>{{db_ana_dem[2]}}</td>
+                                        <td>{{db_ana_dem[3]}}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         {% else %}
                         <p class="text-danger ">Error: No se encontraron datos de irradiancia.</p>
                         {% endif %}
                     </div>
                 </div>
             </div>
+            
+            <form action="/demand_value_calculation" method="post" >        
+                <div class="form-group">
+                    <label for="costo_energia" class="text-black"><b>Costo Energia:</b></label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                        <span class="input-group-text">$</span>
+                        </div>
+                        <input type="number" class="form-control" id="costo_energia" name="costo_energia" min="100" step="0.001" required>
+                    </div>
+                    <small class="form-text text-muted">El precio debe ser superior a $100 COP.</small>
+                </div>
+                <button type="submit" class="btn btn-primary" >Agregar</button>
+            </form>
+            <div class="card-body">
+                <div class="container-fluid">
+                    <h3>Promedio</h3>
+                                           
+                    <table class="table table-responsive">
+                        <thead>
+                            <tr>
+                                <th>-</th>
+                                <th>Consumo (W)/día</th>
+                                <th>Consumo (KW)/día</th>
+                                <th>Consumo (KW)/mes</th>
+                                <th>Pago</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if costo and costo is not none and consult_promedio is not none %} 
+                                {% for item in consult_promedio %}
+                                <tr>
+                                    <td><b>{{ item[0] }}</b></td>
+                                    <td>{{ item[1] }}</td>
+                                    <td>{{ (item[1] / 1000) | round(2) }}</td>
+                                    <td>{{ ((item[1] / 1000) * 30) | round(2) }}</td>
+                                    <td>{{ (((item[1] / 1000) * 30) * costo) | round(2) }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                    
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="container-fluid">
+                    <h3>Consumo Neto</h3>
+                                           
+                    <table  class="table table-responsive">
+                        <thead>
+                            <tr>
+                                <th>-</th>
+                                <th>Consumo (W)/día</th>
+                                <th>Consumo (KW)/mes</th>
+                                <th>Pago</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if costo and costo is not none and consult_neto is not none %} 
+                                {% for item in consult_neto %}
+                                <tr>
+                                    <td><b>{{ item[0] }}</b></td>
+                                    <td>{{ item[1] }}</td>
+                                    <td>{{ (item[1] / 1000) | round(2) }}</td>
+                                    <td>{{ ((item[1] / 1000) * costo) | round(2) }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                    
+                </div>
+            </div>                         
         </div>
     </section>
 

@@ -388,56 +388,171 @@ def get_latest_irradiance_data():
     
     return jsonify(data)  # Devuelve los datos en formato JSON
 
+def consultas_demanda():
+    # Obtener más información de los datos tomados con el HIOKI
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT SUM(dat_dem) AS total_dem, to_char(created_at, 'YYYY-MM-DD HH24:00:00') AS datetime
+                FROM dato_demanda
+                GROUP BY to_char(created_at, 'YYYY-MM-DD HH24:00:00')
+                ORDER BY to_char(created_at, 'YYYY-MM-DD HH24:00:00');
+            """)
+            db_dem = cur.fetchall()
+            cur.execute("""
+                SELECT fec_adem, exc_adem, con_adem, per_adem FROM analisis_demanda ORDER BY fec_adem ASC;
+            """)
+            db_ana_dem = cur.fetchall()
+            # Lista de consulta_promedio
+            consulta_promedio = [
+                "SELECT 'Promedio consumo neto' as nom_adem, round(CAST(AVG(exc_adem) AS numeric), 2) FROM analisis_demanda WHERE per_adem < -2500 AND per_adem IS NOT NULL;",
+                "SELECT 'Promedio actual neto' as nom_adem, round(CAST(AVG(con_adem) AS numeric), 2) FROM analisis_demanda WHERE per_adem < -2500 AND per_adem IS NOT NULL;",
+                "SELECT 'Energía perdida' as nom_adem, round(CAST(AVG(per_adem) AS numeric), 2) FROM analisis_demanda WHERE per_adem < -2500 AND per_adem IS NOT NULL;",
+                "SELECT 'Pagaría a full' as nom_adem, round(CAST(AVG(con_adem) AS numeric), 2) FROM analisis_demanda WHERE per_adem IS NULL;",                
+            ]
+            
+            # Ejecutar consulta_promedio y almacenar resultados
+            consult_promedio= []
+            for consulta in consulta_promedio:
+                cur.execute(consulta)
+                result = cur.fetchone()
+                consult_promedio.append((result[0], float(result[1]))) if result else consult_promedio.append((None, None))
+
+            # Lista de consulta_neto
+            consulta_neto = [
+                "SELECT 'Consumo neto' as nom_adem, round(CAST(SUM(exc_adem) AS numeric), 2)*1.5 FROM analisis_demanda;",
+                "SELECT 'Consumo actual neto' as nom_adem, round(CAST(SUM(con_adem) AS numeric), 2)*1.5 FROM analisis_demanda;",
+                "SELECT 'Energía perdida' as nom_adem, round(CAST(SUM(per_adem) AS numeric), 2)*1.5 FROM analisis_demanda;",
+                "SELECT 'Pagaría a full' as nom_adem, round(CAST(SUM(con_adem) AS numeric), 2)*10 FROM analisis_demanda WHERE per_adem IS NULL;"
+            ]
+            
+            # Ejecutar consulta_neto y almacenar resultados
+            consult_neto= []
+            for consulta in consulta_neto:
+                cur.execute(consulta)
+                result = cur.fetchone()
+                consult_neto.append((result[0], float(result[1]))) if result else consult_neto.append((None, None))
+    return db_dem, db_ana_dem,consult_promedio, consult_neto
+
 @app.route('/demand_display', methods=['GET', 'POST'])
 def demand_display():
     user_id = session.get('user_id')
     if user_id is None:
         return redirect(url_for('inicio_sesion'))
-    
-    # Obtener más información de los datos tomados con el HIOKI
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute('SELECT dat_dem, created_at FROM dato_demanda')
-            db_dem = cur.fetchall()
-
+    error_file=False
     if request.method == 'POST':
-        file = request.files['file']
+        file = request.files.get('file')
         if file and file.filename.endswith('.xlsx'):
             try:
-                # Leer el archivo Excel directamente desde el objeto file
                 df_modelo = pd.read_excel(file, sheet_name='97intvl', header=0)
+                df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str), format='%Y-%m-%d %H:%M:%S')
+                data_to_insert = df_modelo[['Datetime', 'AvePsum']].values.tolist()
+
+                '''# Leer el archivo Excel
+                df_modelo = pd.read_excel(file, sheet_name='97intvl', header=0)                
+                # Unir las columnas 'Date' y 'Time' en un solo campo 'Datetime'
+                df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str), format='%Y-%m-%d %H:%M:%S')
+                # Convertir 'Date' a formato de fecha para filtrado
+                df_modelo['Date'] = pd.to_datetime(df_modelo['Date']).dt.date
+                # Excluir el primer y último día
+                df_filtered = df_modelo[(df_modelo['Date'] > df_modelo['Date'].min()) & (df_modelo['Date'] < df_modelo['Date'].max())]
+                # Extraer solo las columnas específicas y convertir a lista de listas
+                data_to_insert = df_filtered[['Datetime', 'AvePsum']].values.tolist()'''
+                
             except ValueError as e:
-                # Captura el error si la hoja no existe
-                print(f"Error al leer la hoja: {e}")
-                return render_template('informe_y_Estadistica/date_hioki.html')
-            # Unir las columnas 'Date' y 'Time' en un solo campo datetime
-            df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str), format='%Y-%m-%d %H:%M:%S')
-            # Extraer solo las columnas específicas
-            columnas = ['Datetime', 'AvePsum']
-            data_to_insert = df_modelo[columnas].values.tolist()  # Convertir DataFrame a una lista de listas
-            with get_db_connection() as conn:
-                with conn.cursor() as cursor:
-                    for data in data_to_insert:  # Itera sobre los datos a insertar en la base de datos
-                        date_time, ave_psum = data  # Descompone los datos en variables
-                        # Consulta SQL para verificar si el dato ya existe
-                        search_query = """
-                            SELECT 1 FROM dato_demanda
-                            WHERE dat_dem = %s AND created_at = %s AND id_usu = %s
-                        """
-                        cursor.execute(search_query, (ave_psum, date_time, user_id))  # Ejecuta la consulta de búsqueda
-                        if cursor.fetchone() is None:
-                            # Consulta SQL para insertar el nuevo dato
-                            insert_query = """
-                                INSERT INTO dato_demanda (
-                                    dat_dem, created_at, id_usu
-                                ) VALUES (%s, %s, %s)
+                error_file=True
+
+            if  not error_file:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cursor:
+                        duplicado = False
+                        for date_time, ave_psum in data_to_insert:
+                            search_query = """
+                                SELECT 1 FROM dato_demanda
+                                WHERE dat_dem = %s AND created_at = %s AND id_usu = %s
                             """
-                            cursor.execute(insert_query, (ave_psum, date_time, user_id))  # Ejecuta la consulta de inserción
-                        conn.commit()  # Guarda los cambios en la base de datos
-            return render_template('informe_y_Estadistica/date_hioki.html')
-        else:
-            return 'Invalid file format'
-    return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem)
+                            cursor.execute(search_query, (ave_psum, date_time, user_id))
+                            if cursor.fetchone():
+                                duplicado = True
+                                break
+                            insert_query = """
+                                INSERT INTO dato_demanda (dat_dem, created_at, id_usu)
+                                VALUES (%s, %s, %s)
+                            """
+                            cursor.execute(insert_query, (ave_psum, date_time, user_id))
+                        conn.commit()
+
+                        if not duplicado:
+                            # Consultas para análisis
+                            queries = {
+                                'excedente': """
+                                    SELECT DATE(created_at), SUM(dat_dem) FROM dato_demanda
+                                    GROUP BY DATE(created_at)
+                                    ORDER BY DATE(created_at);
+                                """,
+                                'consumo': """
+                                    SELECT DATE(datetime), SUM(total_dem) 
+                                    FROM (
+                                        SELECT to_char(created_at, 'YYYY-MM-DD HH24:00:00') AS datetime, SUM(dat_dem) AS total_dem
+                                        FROM dato_demanda 
+                                        GROUP BY to_char(created_at, 'YYYY-MM-DD HH24:00:00')
+                                    ) AS datos
+                                    WHERE total_dem >= 0 
+                                    GROUP BY DATE(datetime) 
+                                    ORDER BY DATE(datetime);
+                                """,
+                                'energia_perdida': """
+                                    SELECT DATE(datetime), SUM(total_dem) 
+                                    FROM (
+                                        SELECT to_char(created_at, 'YYYY-MM-DD HH24:00:00') AS datetime, SUM(dat_dem) AS total_dem
+                                        FROM dato_demanda 
+                                        GROUP BY to_char(created_at, 'YYYY-MM-DD HH24:00:00')
+                                    ) AS datos
+                                    WHERE total_dem <= 0  
+                                    GROUP BY DATE(datetime) 
+                                    ORDER BY DATE(datetime);
+                                """
+                            }
+                            
+                            results = {}
+                            for key, query in queries.items():
+                                cursor.execute(query)
+                                results[key] = cursor.fetchall()
+
+                            # Insertar resultados en analisis_demanda y obtener id_adem
+                            for (fecha, excedente), (_, consumo) in zip(results['excedente'], results['consumo']):
+                                insert_analisis_query = """
+                                    INSERT INTO analisis_demanda (fec_adem, exc_adem, con_adem)
+                                    VALUES (%s, %s, %s)
+                                    RETURNING id_adem
+                                """
+                                cursor.execute(insert_analisis_query, (fecha, excedente, consumo))
+                                id_adem = cursor.fetchone()[0]
+                                cursor.execute("""
+                                    UPDATE dato_demanda
+                                    SET id_adem = %s
+                                    WHERE DATE(created_at) = %s
+                                """, (id_adem, fecha))
+                            conn.commit()
+
+                            # Actualizar el campo per_adem en analisis_demanda
+                            for fecha, energia in results['energia_perdida']:
+                                cursor.execute("""
+                                    UPDATE analisis_demanda
+                                    SET per_adem = %s
+                                    WHERE fec_adem = %s
+                                """, (energia, fecha))
+                            conn.commit()
+    db_dem, db_ana_dem,consult_promedio, consult_neto = consultas_demanda()
+    return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem)                       
+
+@app.route('/demand_value_calculation', methods=['POST'])
+def demand_value_calculation():
+    # Verificar si el método de la solicitud es POST
+    if request.method == 'POST': 
+       costo = float(request.form['costo_energia'])  # Obtener el valor del costo de energia
+       db_dem, db_ana_dem,consult_promedio, consult_neto = consultas_demanda()
+       return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem, consult_promedio=consult_promedio, consult_neto=consult_neto, costo = costo)
 
 if __name__ == '__main__':
     app.run(debug=True)
