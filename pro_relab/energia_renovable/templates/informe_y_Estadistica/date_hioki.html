@@ -28,166 +28,187 @@
     {% block navbar %} {% include 'layouts/navbar.html' %} {% endblock %}
     <section class="align-items-center justify-content-center">
         <div class="container" data-aos="fade-up">
-            <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;">
-                
-                <div class="col" style="margin-right: 2rem;">
-                    <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto;">
-                        <form action="/demand_display" method="post" enctype="multipart/form-data">
-                            <div class="form-group">
-                                <input type="file" class="form-control-file" id="file" name="file" accept=".xlsx" required>
-                                <button type="submit" class="btn btn-primary btn-lg mt-2">Subir</button>
+            <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;">                
+                <div class="col-sm-6" style="margin-right: 2rem;">
+                    <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto;padding: 1rem; margin-bottom: 2rem;">
+                        <form action="/demand_display" method="post" enctype="multipart/form-data" >
+                            <div>
+                                <label for="file" class="form-label">Subir Archivo .xlxs</label>
+                                <input type="file" class="form-control form-control-lg" id="file" name="file" accept=".xlsx" required>
+                                <button type="submit" id="file-button" class="btn btn-primary mt-2" 
+                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                data-bs-custom-class="custom-tooltip"
+                                data-bs-title="Asegurate que el archivo Excel, tenga la columna AvePSum.">Subir</button>
                             </div>
-                        </form>      
-                    </div>
-                    
-                    <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;">                        
-                        <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto;">
-                            <div class="card-body">
-                                <h3>Datos Demanda</h3>
-                                {% if db_dem is not none %}
-                                <table id="tabla" class="table table-responsive ">
-                                    <thead>
-                                        <tr>
-                                            <th>Fecha y Hora</th>
-                                            <th>Demanda Energetica</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for db_dem in db_dem %}
-                                        <tr>
-                                            <td class="time">{{db_dem[1]}}</td>
-                                            <td class="dat_demand">{{db_dem[0]}}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                                {% else %}
-                                <p class="text-danger ">Error: No se encontraron datos de irradiancia.</p>
-                                {% endif %}
-        
-                            </div>
-                        </div>
-                        <div id="chart"></div>             
-                    </div>
-                    <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;">
-                        <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto;">
-                            <div class="card-body">
-                                <h3>Analisis Datos Demanda</h3>
-                                    {% if db_ana_dem is not none %}                        
-                                    <table id="tabla" class="table table-responsive ">
-                                        <thead>
-                                            <tr>
-                                                <th>Fecha </th>
-                                                <th>Excedente</th>
-                                                <th>Consumo</th>
-                                                <th>Energia Perdida</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for db_ana_dem in db_ana_dem %}
-                                            <tr>
-                                                <td class="time">{{db_ana_dem[0]}}</td>
-                                                <td class="excedente">{{db_ana_dem[1]}}</td>
-                                                <td class="consumo">{{db_ana_dem[2]}}</td>
-                                                <td class="perdida">{{db_ana_dem[3]}}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                {% else %}
-                                <p class="text-danger ">Error: No se encontraron datos de irradiancia.</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div id="chart1"></div>
-                    </div> 
-                </div>
-                <div class="col">
-                    <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;">
-                        <form action="/demand_value_calculation" method="post" style="margin-bottom: 4rem;">        
-                            <div class="form-group">
-                                <label for="costo_energia" class="text-black"><b>Costo Energia:</b></label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                    <span class="input-group-text">$</span>
-                                    </div>
-                                    <input type="number" class="form-control" id="costo_energia" name="costo_energia" min="100" step="0.001" required>
-                                </div>
-                                <small class="form-text text-muted">El precio debe ser superior a $100 COP.</small>
-                            </div>
-                            <button type="submit" class="btn btn-primary" >Agregar</button>
                         </form>
-                        <div class="col">
-                            {% if costo and costo is not none and consult_promedio is not none %} 
-                                <div class="card-body">
-                                    <div class="container-fluid">
-                                        <h3>Promedio</h3>
-                                                            
-                                        <table class="table table-responsive">
+                    </div>
+
+                    <div class="accordion" id="accordionExample">
+                        <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                Datos Demanda de Energia
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                            <div class="accordion-body">
+                                <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto; margin-bottom: 2rem;">
+                                    <div class="card-body">
+                                        <h3>Datos Demanda de Energia</h3>
+                                        {% if db_dem is not none %}
+                                        <table id="tabla" class="table table-responsive table table-hover">
                                             <thead class="table-primary">
                                                 <tr>
-                                                    <th>-</th>
-                                                    <th>Consumo (W)/día</th>
-                                                    <th>Consumo (KW)/día</th>
-                                                    <th>Consumo (KW)/mes</th>
-                                                    <th>Pago</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>                            
-                                                {% for item in consult_promedio %}
-                                                <tr>
-                                                    <td class="promedio_nombres"><b>{{ item[0] }}</b></td>
-                                                    <td class="promedio_dia_w">{{ item[1] }}</td>
-                                                    <td class="promedio_dia_kw">{{ (item[1] / 1000) | round(2) }}</td>
-                                                    <td class="promedio_mes_kw">{{ ((item[1] / 1000) * 30) | round(2) }}</td>
-                                                    <td class="promedio_pago">{{ (((item[1] / 1000) * 30) * costo) | round(2) }}</td>
-                                                </tr>
-                                                {% endfor %}                            
-                                            </tbody>
-                                        </table>                    
-                                    </div>
-                                </div>
-                                <div id="chart2"></div>
-                            {% endif %}
-                        </div>
-                        <div class="col">                            
-                            {% if costo and costo is not none and consult_neto is not none %}
-                                <div class="card-body">
-                                    <div class="container-fluid">
-                                        <h3>Consumo Neto</h3>
-                                                            
-                                        <table  class="table table-responsive">
-                                            <thead class="table-primary">
-                                                <tr>
-                                                    <th>-</th>
-                                                    <th>Consumo (W)/día</th>
-                                                    <th>Consumo (KW)/mes</th>
-                                                    <th>Pago</th>
+                                                    <th>Fecha y Hora</th>
+                                                    <th>Demanda Energetica</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                
-                                                    {% for item in consult_neto %}
-                                                    <tr>
-                                                        <td class="nombres"><b>{{ item[0] }}</b></td>
-                                                        <td class="consumo_dia_w">{{ item[1] }}</td>
-                                                        <td class="consumo_mes_kw">{{ (item[1] / 1000) | round(2) }}</td>
-                                                        <td class="pago">{{ ((item[1] / 1000) * costo) | round(2) }}</td>
-                                                    </tr>
-                                                    {% endfor %}
-                                                
+                                                {% for db_dem in db_dem %}
+                                                <tr>
+                                                    <td class="time">{{db_dem[1]}}</td>
+                                                    <td class="dat_demand">{{db_dem[0]}}</td>
+                                                </tr>
+                                                {% endfor %}
                                             </tbody>
                                         </table>
-                                        
+                                        {% else %}
+                                        <p class="text-danger ">Error: No se encontraron datos de irradiancia.</p>
+                                        {% endif %}
+                
                                     </div>
                                 </div>
-                                <div id="chart3"></div>
-                            {% endif %}
+                                <div id="chart"></div> 
+                            </div>
                         </div>
-                    </div>                    
+                        </div>
+                        <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Analisis Datos Demanda de Energia
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                            <div class="accordion-body">
+                                <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto; margin-bottom: 2rem;">
+                                    <div class="card-body">
+                                        <h3>Analisis Datos Demanda de Energia</h3>
+                                            {% if db_ana_dem is not none %}                        
+                                            <table id="tabla" class="table table-responsive table table-hover">
+                                                <thead class="table-primary">
+                                                    <tr>
+                                                        <th>Fecha </th>
+                                                        <th>Excedente</th>
+                                                        <th>Consumo</th>
+                                                        <th>Energia Perdida</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for db_ana_dem in db_ana_dem %}
+                                                    <tr>
+                                                        <td class="time">{{db_ana_dem[0]}}</td>
+                                                        <td class="excedente">{{db_ana_dem[1]}}</td>
+                                                        <td class="consumo">{{db_ana_dem[2]}}</td>
+                                                        <td class="perdida">{{db_ana_dem[3]}}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        {% else %}
+                                        <p class="text-danger ">Error: No se encontraron datos de irradiancia.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div id="chart1"></div>
+                            </div>
+                        </div>
+                        </div>                        
+                    </div>
                 </div>
-            </div>
-                        
+                <div class="col">
+                    <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto;padding: 1rem; margin-bottom: 2rem;">
+                        <form action="/demand_value_calculation" method="post" >
+                            <label for="file" class="form-label">Costo de Energia</label>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="basic-addon1">$</span>
+                                <input type="number" class="form-control" id="costo_energia" name="costo_energia" placeholder="Costo Energia" min="100" step="0.001" required>
+                            </div>                            
+                            <button type="submit" id="agregar-costo" class="btn btn-primary  mt-2" 
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            data-bs-custom-class="custom-tooltip"
+                            data-bs-title="Asegurate que el costo de energia sea correcto.">Agregar</button>
+                        </form>    
+                    </div>
+                    
+                    <div class="col">
+                        {% if costo and costo is not none and consult_promedio is not none %} 
+                            <div class="card-body" style="margin-bottom: 2rem;">
+                                <div class="container-fluid">
+                                    <h3>Promedio</h3>
+                                                        
+                                    <table class="table table-responsive table table-hover" >
+                                        <thead class="table-primary">
+                                            <tr>
+                                                <th>-</th>
+                                                <th>Consumo (W)/día</th>
+                                                <th>Consumo (KW)/día</th>
+                                                <th>Consumo (KW)/mes</th>
+                                                <th>Pago</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>                            
+                                            {% for item in consult_promedio %}
+                                            <tr>
+                                                <td class="promedio_nombres"><b>{{ item[0] }}</b></td>
+                                                <td class="promedio_dia_w">{{ (item[1]) | round(2) }}</td>
+                                                <td class="promedio_dia_kw">{{ (item[1] / 1000) | round(2) }}</td>
+                                                <td class="promedio_mes_kw">{{ ((item[1] / 1000) * 30) | round(2) }}</td>
+                                                <td class="promedio_pago">{{ (((item[1] / 1000) * 30) * costo) | round(2) }}</td>
+                                            </tr>
+                                            {% endfor %}                            
+                                        </tbody>
+                                    </table>                    
+                                </div>
+                            </div>
+                            <div id="chart2"></div>
+                        {% endif %}
+                    </div>
+                    <div class="col">                            
+                        {% if costo and costo is not none and consult_neto is not none %}
+                            <div class="card-body" style="margin-bottom: 2rem;">
+                                <div class="container-fluid">
+                                    <h3>Consumo Neto</h3>
+                                                        
+                                    <table  class="table table-responsive table table-hover">
+                                        <thead class="table-primary">
+                                            <tr>
+                                                <th>-</th>
+                                                <th>Consumo (W)/día</th>
+                                                <th>Consumo (KW)/mes</th>
+                                                <th>Pago</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            
+                                                {% for item in consult_neto %}
+                                                <tr>
+                                                    <td class="nombres"><b>{{ item[0] }}</b></td>
+                                                    <td class="consumo_dia_w">{{ (item[1]) | round(2) }}</td>
+                                                    <td class="consumo_mes_kw">{{ (item[1] / 1000) | round(2) }}</td>
+                                                    <td class="pago">{{ ((item[1] / 1000) * costo) | round(2) }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            
+                                        </tbody>
+                                    </table>
+                                    
+                                </div>
+                            </div>
+                            <div id="chart3"></div>
+                        {% endif %}
+                    </div>                   
+                </div>
+            </div>                        
                  
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
@@ -250,6 +271,9 @@
                                 opacityTo: 0,
                                 stops: [0, 90, 100]
                             },
+                        },
+                        stroke: {
+                            width: 1 // Define el grosor de la línea
                         },
                         yaxis: {
                             labels: {
@@ -353,7 +377,7 @@
                             align: 'left'
                         },
                         fill: {
-                            type: 'gradient',
+                            type: 'solid',
                             gradient: {
                                 shadeIntensity: 1,
                                 inverseColors: false,
@@ -361,6 +385,9 @@
                                 opacityTo: 0,
                                 stops: [0, 90, 100]
                             },
+                        },
+                        stroke: {
+                            width: 1 // Define el grosor de la línea
                         },
                         yaxis: {
                             labels: {

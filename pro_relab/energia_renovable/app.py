@@ -416,8 +416,10 @@ def consultas_demanda():
             for consulta in consulta_promedio:
                 cur.execute(consulta)
                 result = cur.fetchone()
-                consult_promedio.append((result[0], float(result[1]))) if result else consult_promedio.append((None, None))
-
+                if result:
+                    consult_promedio.append((result[0], float(result[1]) if result[1] is not None else None))
+                else:
+                    consult_promedio.append((None, None))
             # Lista de consulta_neto
             consulta_neto = [
                 "SELECT 'Consumo neto' as nom_adem, round(CAST(SUM(exc_adem) AS numeric), 2)*1.5 FROM analisis_demanda;",
@@ -431,7 +433,10 @@ def consultas_demanda():
             for consulta in consulta_neto:
                 cur.execute(consulta)
                 result = cur.fetchone()
-                consult_neto.append((result[0], float(result[1]))) if result else consult_neto.append((None, None))
+                if result:
+                    consult_neto.append((result[0], float(result[1]) if result[1] is not None else None))
+                else:
+                    consult_neto.append((None, None))
     return db_dem, db_ana_dem,consult_promedio, consult_neto
 
 @app.route('/demand_display', methods=['GET', 'POST'])
@@ -550,9 +555,12 @@ def demand_display():
 def demand_value_calculation():
     # Verificar si el método de la solicitud es POST
     if request.method == 'POST': 
-       costo = float(request.form['costo_energia'])  # Obtener el valor del costo de energia
-       db_dem, db_ana_dem,consult_promedio, consult_neto = consultas_demanda()
-       return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem, consult_promedio=consult_promedio, consult_neto=consult_neto, costo = costo)
+        costo = float(request.form['costo_energia'])  # Obtener el valor del costo de energia
+        db_dem, db_ana_dem,consult_promedio, consult_neto = consultas_demanda()
+        if db_dem == []:
+            return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem)
+        
+        return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem, consult_promedio=consult_promedio, consult_neto=consult_neto, costo = costo)
 
 if __name__ == '__main__':
     app.run(debug=True)

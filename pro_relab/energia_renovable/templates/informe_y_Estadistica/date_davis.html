@@ -5,7 +5,7 @@
 
     $(function() {
         // Inicializa DataTable y guarda la referencia
-        table = $('#tabla').DataTable({
+        table = $('#tablaG').DataTable({
             "language": {
                 "emptyTable": "No hay datos disponibles en la tabla",
                 "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
@@ -68,7 +68,7 @@
                     <div class="card-body">
                         <h2>Datos de Irradiancia - Davis</h2>
                         {% if db_irr is not none %}
-                        <table id="tabla" class="table table-responsive ">
+                        <table id="tablaG" class="table table-responsive ">
                             <thead>
                                 <tr>
                                     <th style="width: 12rem;">Fecha y Hora</th>
@@ -79,7 +79,7 @@
                             <tbody>
                                 {% for db_irr in db_irr %}
                                 <tr>
-                                    <td class="time">{{db_irr[2]}}</td>
+                                    <td class="time_irradiance">{{db_irr[2]}}</td>
                                     <td class="avg_irradiance">{{db_irr[0]}}</td>
                                     <td class="highest_irradiance">{{db_irr[1]}}</td>
                                 </tr>
@@ -94,192 +94,112 @@
                     </div>
                 </div>
             </div>
-            <div class="row" style="margin-bottom: 2rem;">
-                <div class="container mt-4">
-                    <div class="row mb-2">
-                        <div class="d-flex align-items-center mb-1">
-                            <input type="date" class="form-control" style="width: 16rem; margin-right: 1rem;" id="dateSelector" />
-                            <button id="filterButton" class="btn btn-primary">Filtrar</button>
-                        </div>
-                    </div>
-                    <div class="row justify-content-center">
-                        <div class="col-sm-8">
-                            <canvas id="myChart" width="300" height="200"></canvas>
-                        </div>
-                    </div>
-                </div>
-                <script>
-                    // Inicialización de los arrays de datos
-                    const irradianceData = [];
-                    const highestIrradianceData = [];
-                    const labels = [];
-
-                    // Selección de las filas de la tabla
-                    const tableRows = document.querySelectorAll('#tabla tbody tr');
-
-                    // Función para filtrar datos por fecha y hora
-                    function filterDataByDateAndTime(dateString) {
-                        // Inicialización de arrays para datos filtrados
-                        const filteredLabels = [];
-                        const filteredIrradianceData = [];
-                        const filteredHighestIrradianceData = [];
-
-                        // Iterar sobre cada fila de la tabla
-                        tableRows.forEach(row => {
-                            const labelCell = row.querySelector('.time'); // Selecciona la celda con la hora
-                            const label = labelCell ? labelCell.textContent : ''; // Obtiene el texto de la celda de la hora
-                            const date = new Date(label); // Convierte el texto en un objeto Date
-                            const formattedDate = date.toISOString().split('T')[0]; // Convertir a formato YYYY-MM-DD
-
-                            // Verifica si la fecha de la fila coincide con la fecha seleccionada
-                            if (formattedDate === dateString) {
-                                const hours = date.getHours(); // Obtiene la hora
-                                // Filtrar datos entre las 6 AM y las 7 PM (19:00)
-                                if (hours > 5 && hours <= 18) {
-                                    const avgIrradianceCell = row.querySelector('.avg_irradiance'); // Selecciona la celda con la irradiancia promedio
-                                    const highestIrradianceCell = row.querySelector('.highest_irradiance'); // Selecciona la celda con la irradiancia máxima
-                                    const irradianceValue = avgIrradianceCell ? parseFloat(avgIrradianceCell.textContent) : null; // Obtiene el valor de la irradiancia promedio
-                                    const highestIrradianceValue = highestIrradianceCell ? parseFloat(highestIrradianceCell.textContent) : null; // Obtiene el valor de la irradiancia máxima
-
-                                    // Si la irradiancia promedio no es null, agrega los datos filtrados
-                                    if (irradianceValue !== null) {
-                                        filteredIrradianceData.push(irradianceValue); // Agrega el valor al array filtrado
-                                        filteredLabels.push(date.toTimeString().substring(0, 5)); // Solo hora y minutos
-                                    }
-
-                                    // Si la irradiancia máxima no es null, agrega los datos filtrados
-                                    if (highestIrradianceValue !== null) {
-                                        filteredHighestIrradianceData.push(highestIrradianceValue); // Agrega el valor al array filtrado
-                                    }
+            <div id="myChart" ></div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Obtener los datos de la tabla y convertirlos en arrays de objetos
+                    var dates = [];
+                    var radiancionData = [];
+                    var radiacionAltaData = [];
+                    
+                    document.querySelectorAll('#tablaG tbody tr').forEach(function(row, index) {
+                        var timeElement = row.querySelector('.time_irradiance');
+                        var radiancionElement = row.querySelector('.avg_irradiance');
+                        var radiacionAltaElement = row.querySelector('.highest_irradiance');
+                        
+                        if (timeElement && radiancionElement && radiacionAltaElement ) {
+                            var timeText = timeElement.innerText;
+                            var time = new Date(timeText).getTime();
+            
+                            var radiancion = parseFloat(radiancionElement.innerText.replace(/,/g, ''));
+                            var radiacionAlta = parseFloat(radiacionAltaElement.innerText.replace(/,/g, ''));
+                            
+                            if (!isNaN(time) && !isNaN(radiancion) && !isNaN(radiacionAlta) ) {
+                                dates.push(time);
+                                radiancionData.push({ x: time, y: radiancion });
+                                radiacionAltaData.push({ x: time, y: radiacionAlta });
+                            } 
+                        } 
+                    });
+            
+                    console.log(radiancionData); // Verificar los datos extraídos
+                    console.log(radiacionAltaData); // Verificar los datos extraídos
+            
+                    // Configuración del gráfico
+                    var options = {
+                        series: [
+                            {
+                                name: 'Radiancion',
+                                data: radiancionData
+                            },
+                            {
+                                name: 'Radiacion Alta',
+                                data: radiacionAltaData
+                            }
+                        ],
+                        chart: {
+                            type: 'line',
+                            height: 300,
+                            zoom: {
+                                type: 'x',
+                                enabled: true,
+                                autoScaleYaxis: true
+                            },
+                            toolbar: {
+                                autoSelected: 'zoom'
+                            }
+                        },
+                        dataLabels: {
+                            enabled: false
+                        },
+                        markers: {
+                            size: 0,
+                        },
+                        title: {
+                            text: 'Datos Irradiancia',
+                            align: 'left'
+                        },
+                        fill: {
+                            type: 'solid',
+                            gradient: {
+                                shadeIntensity: 1,
+                                inverseColors: false,
+                                opacityFrom: 0.5,
+                                opacityTo: 0,
+                                stops: [0, 90, 100]
+                            },
+                        },
+                        stroke: {
+                            width: 1 // Define el grosor de la línea
+                        },
+                        yaxis: {
+                            labels: {
+                                formatter: function (val) {
+                                    return val.toFixed(0); // Muestra los valores en el eje Y
+                                },
+                            },
+                            title: {
+                                text: 'G'
+                            },
+                        },
+                        xaxis: {
+                            type: 'datetime',
+                        },
+                        tooltip: {
+                            shared: false,
+                            y: {
+                                formatter: function (val) {
+                                    return val.toFixed(0) + ' unidades'; // Muestra los valores en el tooltip
                                 }
                             }
-                        });
-
-                        // Ordenar datos por hora
-                        const sortedData = filteredLabels.map((label, index) => ({
-                            label: label,
-                            avgIrradiance: filteredIrradianceData[index],
-                            highestIrradiance: filteredHighestIrradianceData[index] || null
-                        })).sort((a, b) => a.label.localeCompare(b.label)); // Ordena los datos por la etiqueta de hora
-
-                        // Retorna los datos filtrados y ordenados
-                        return {
-                            labels: sortedData.map(data => data.label), // Usar hora como etiqueta
-                            irradianceData: sortedData.map(data => data.avgIrradiance),
-                            highestIrradianceData: sortedData.map(data => data.highestIrradiance)
-                        };
-                    }
-
-                    // Función para crear o actualizar el gráfico
-                    function createOrUpdateChart(dateString) {
-                        // Filtrar los datos por la fecha seleccionada
-                        const { labels: filteredLabels, irradianceData: filteredIrradianceData, highestIrradianceData: filteredHighestIrradianceData } = filterDataByDateAndTime(dateString);
-
-                        // Obtiene el contexto del canvas donde se dibujará el gráfico
-                        const ctx = document.getElementById('myChart').getContext('2d');
-
-                        // Título del gráfico
-                        const chartTitle = `Irradiancia - ${dateString}`;
-
-                        if (window.chart) {
-                            // Actualizar gráfico existente
-                            window.chart.data.labels = filteredLabels; // Actualiza las etiquetas del gráfico
-                            window.chart.data.datasets[0].data = filteredIrradianceData; // Actualiza los datos de irradiancia promedio
-                            window.chart.data.datasets[1].data = filteredHighestIrradianceData; // Actualiza los datos de irradiancia máxima
-                            window.chart.options.plugins.title.text = chartTitle; // Actualiza el título
-                            window.chart.update(); // Actualiza el gráfico con los nuevos datos
-                        } else {
-                            // Crear nuevo gráfico
-                            window.chart = new Chart(ctx, {
-                                type: 'line', // Tipo de gráfico: línea
-                                data: {
-                                    labels: filteredLabels,
-                                    datasets: [{
-                                        label: 'Irradiancia Promedio (W/m²)',
-                                        data: filteredIrradianceData,
-                                        backgroundColor: 'rgba(255, 99, 132, 0.2)', // Color de fondo de las líneas
-                                        borderColor: 'rgba(255, 99, 132, 1)', // Color del borde de las líneas
-                                        pointRadius: 0, // Radio de los puntos
-                                        pointHoverRadius: 5, // Radio de los puntos al pasar el mouse
-                                        pointHitRadius: 5, // Área de hit para los puntos
-                                        borderWidth: 2, // Ancho del borde de las líneas
-                                        tension: 0.2, // Curvatura de las líneas
-                                    }, {
-                                        label: 'Irradiancia Máxima (W/m²)',
-                                        data: filteredHighestIrradianceData,
-                                        backgroundColor: 'rgba(54, 162, 235, 0.2)', // Color de fondo de las líneas
-                                        borderColor: 'rgba(54, 162, 235, 1)', // Color del borde de las líneas
-                                        pointRadius: 0, // Radio de los puntos
-                                        pointHoverRadius: 5, // Radio de los puntos al pasar el mouse
-                                        pointHitRadius: 5, // Área de hit para los puntos
-                                        borderWidth: 2, // Ancho del borde de las líneas
-                                        tension: 0.2, // Curvatura de las líneas
-                                    }]
-                                },
-                                options: {
-                                    animation: {
-                                        x: {
-                                            type: 'number',
-                                            easing: 'linear', // Tipo de animación
-                                            duration: 2000, // Duración de la animación en milisegundos
-                                            from: NaN, // Valor inicial de la animación
-                                            delay(ctx) {
-                                                // Retraso entre los puntos para una animación suave
-                                                const delayBetweenPoints = 1000 / Math.max(filteredIrradianceData.length, filteredHighestIrradianceData.length);
-                                                if (ctx.datasetIndex === 0) {
-                                                    return ctx.index * delayBetweenPoints; // Calcula el retraso basado en el índice del punto
-                                                } else {
-                                                    return 0;
-                                                }
-                                            }
-                                        }
-                                    },
-                                    scales: {
-                                        x: {
-                                            type: 'category', // Tipo de escala del eje X
-                                            title: {
-                                                display: true,
-                                                text: 'Hora del Día' // Título del eje X
-                                            }
-                                        },
-                                        y: {
-                                            beginAtZero: true, // Inicia la escala en cero
-                                            title: {
-                                                display: true,
-                                                text: 'Irradiancia (W/m²)' // Título del eje Y
-                                            }
-                                        }
-                                    },
-                                    plugins: {
-                                        title: {
-                                            display: true,
-                                            text: chartTitle, // Establecer título del gráfico
-                                            font: {
-                                                size: 24, // Tamaño de la fuente del título en píxeles
-                                                weight: 'bold', // Hacer el título en negrita
-                                                family: "'Helvetica Neue', 'Arial', sans-serif" // Especificar la familia de fuentes
-                                            }
-                                        }
-                                    }
-                                }
-                            });
                         }
-                    }
-
-                    // Obtener la fecha de hoy en formato YYYY-MM-DD
-                    const today = new Date().toISOString().split('T')[0];
-                    createOrUpdateChart(today); // Crear o actualizar el gráfico con la fecha de hoy
-
-                    // Event listener para el botón de filtrado
-                    document.getElementById('filterButton').addEventListener('click', () => {
-                        const selectedDate = document.getElementById('dateSelector').value; // Obtiene la fecha seleccionada del selector de fecha
-                        if (selectedDate) {
-                            createOrUpdateChart(selectedDate); // Crea o actualiza el gráfico con la fecha seleccionada
-                        }
-                    });
-
-                </script>                
-            </div>
+                    };
+            
+                    // Crear y renderizar el gráfico
+                    var chart = new ApexCharts(document.querySelector("#myChart"), options);
+                    chart.render();
+                });
+            </script> 
         </div>
     </section>
 
