@@ -191,7 +191,10 @@
         scroll-behavior: smooth;
     }
 }
-
+.custom-card {
+    background: linear-gradient(120deg, #8db0d8, #13447c, #000000);
+    color: white;
+}
 .line {
     position: absolute;
     width: 0;
