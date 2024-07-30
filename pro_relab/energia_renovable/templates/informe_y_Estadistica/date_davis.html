@@ -66,7 +66,7 @@
             <div class="row" style="margin-bottom: 2rem;">
                 <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto;">
                     <div class="card-body">
-                        <h2>Datos de Irradiancia - Davis</h2>
+                        <h3>Datos de Irradiancia - Davis</h3>
                         {% if db_irr is not none %}
                         <table id="tablaG" class="table table-responsive ">
                             <thead>
@@ -189,7 +189,7 @@
                             shared: false,
                             y: {
                                 formatter: function (val) {
-                                    return val.toFixed(0) + ' unidades'; // Muestra los valores en el tooltip
+                                    return val.toFixed(0) + ' W/m²'; // Muestra los valores en el tooltip
                                 }
                             }
                         }

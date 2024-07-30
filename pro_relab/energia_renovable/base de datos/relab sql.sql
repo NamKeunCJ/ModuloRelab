@@ -53,7 +53,7 @@ CREATE TABLE dato_irradiancia(
     prom_irr FLOAT NOT NULL, -- promedio irradiancia
     max_irr FLOAT NOT NULL, -- maxima irradiancia
     status BOOLEAN NOT NULL DEFAULT true, -- estado del dato
-    created_at TIMESTAMP NOT NULL, -- fecha que se creo el dato en estacion meteorologica
+    created_at TIMESTAMP NOT NULL UNIQUE, -- fecha que se creo el dato en estacion meteorologica
     update_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- fecha en la que se actualizo el dato en la base de datos
     deleted_at TIMESTAMP NULL, -- fecha en la cual se elimino el dato
     id_usu INTEGER REFERENCES usuario(id_usu) NOT NULL -- 1 usuario varios datos
