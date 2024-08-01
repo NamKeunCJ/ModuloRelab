@@ -241,14 +241,28 @@
                         }],
                         chart: {
                             type: 'area',
-                            stacked: false,
                             height: 300,
                             zoom: {
                                 type: 'x',
                                 enabled: true,
                                 autoScaleYaxis: true
                             },
-                            toolbar: {
+                            toolbar: {                                
+                                export: {
+                                    csv: {
+                                        filename: 'demanda_energetica',
+                                        columnDelimiter: ',',
+                                        headerCategory: 'Fecha y Hora',
+                                        headerValue: 'Demanda',
+                                        categoryFormatter(x) {
+                                            // Formatear la fecha y hora para la exportación CSV
+                                            return new Date(x).toLocaleString();
+                                        },
+                                        valueFormatter(y) {
+                                            return y.toFixed(2); // Ajusta el formato del valor si es necesario
+                                        }
+                                    }
+                                },
                                 autoSelected: 'zoom'
                             }
                         },
@@ -287,12 +301,23 @@
                         },
                         xaxis: {
                             type: 'datetime',
+                            labels: {
+                                formatter: function (value) {
+                                    var date = new Date(value);
+                                    return date.toLocaleDateString(); 
+                                }
+                            }
                         },
                         tooltip: {
                             shared: false,
                             y: {
                                 formatter: function (val) {
                                     return val.toFixed(0) ; // Muestra los valores en el tooltip
+                                }
+                            },
+                            x: {
+                                formatter: function (val) {
+                                    return new Date(val).toLocaleString(); // Muestra la fecha y hora en el tooltip
                                 }
                             }
                         }
@@ -362,7 +387,19 @@
                                 enabled: true,
                                 autoScaleYaxis: true
                             },
-                            toolbar: {
+                            toolbar: {                                
+                                export: {
+                                    csv: {
+                                        filename: 'analisis_demanda',
+                                        columnDelimiter: ',',
+                                        headerCategory: 'Fecha',
+                                        headerValue: 'Valor',
+                                        categoryFormatter(x) {
+                                            // Formatear solo la fecha para la exportación CSV
+                                            return new Date(x).toLocaleDateString();
+                                        }
+                                    }
+                                },
                                 autoSelected: 'zoom'
                             }
                         },
@@ -400,7 +437,7 @@
                             },
                         },
                         xaxis: {
-                            type: 'datetime',
+                            type: 'datetime'
                         },
                         tooltip: {
                             shared: false,
@@ -480,7 +517,12 @@
                             height: 300,
                             stacked: true,
                             toolbar: {
-                                show: true
+                                show: true,
+                                export:{
+                                    csv: {
+                                        filename: 'Promedio',
+                                    }
+                                }
                             },
                             zoom: {
                                 enabled: true
@@ -598,7 +640,12 @@
                             height: 300,
                             stacked: true,
                             toolbar: {
-                                show: true
+                                show: true,
+                                export:{
+                                    csv: {
+                                        filename: 'Consumo Neto',
+                                    }
+                                }
                             },
                             zoom: {
                                 enabled: true

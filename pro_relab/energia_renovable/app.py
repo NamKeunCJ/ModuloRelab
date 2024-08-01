@@ -383,7 +383,7 @@ def consultas_demanda():
                 SELECT SUM(dat_dem) AS total_dem, to_char(created_at, 'YYYY-MM-DD HH24:00:00') AS datetime
                 FROM dato_demanda
                 GROUP BY to_char(created_at, 'YYYY-MM-DD HH24:00:00')
-                ORDER BY to_char(created_at, 'YYYY-MM-DD HH24:00:00');
+                ORDER BY to_char(created_at, 'YYYY-MM-DD HH24:00:00') DESC;
             """)
             db_dem = cur.fetchall()
             cur.execute("""
@@ -480,7 +480,7 @@ def demand_display():
                                 'excedente': """
                                     SELECT DATE(created_at), SUM(dat_dem) FROM dato_demanda
                                     GROUP BY DATE(created_at)
-                                    ORDER BY DATE(created_at);
+                                    ORDER BY DATE(created_at) DESC;
                                 """,
                                 'consumo': """
                                     SELECT DATE(datetime), SUM(total_dem) 
@@ -491,7 +491,7 @@ def demand_display():
                                     ) AS datos
                                     WHERE total_dem >= 0 
                                     GROUP BY DATE(datetime) 
-                                    ORDER BY DATE(datetime);
+                                    ORDER BY DATE(datetime) DESC;
                                 """,
                                 'energia_perdida': """
                                     SELECT DATE(datetime), SUM(total_dem) 
@@ -502,7 +502,7 @@ def demand_display():
                                     ) AS datos
                                     WHERE total_dem <= 0  
                                     GROUP BY DATE(datetime) 
-                                    ORDER BY DATE(datetime);
+                                    ORDER BY DATE(datetime) DESC;
                                 """
                             }
                             
