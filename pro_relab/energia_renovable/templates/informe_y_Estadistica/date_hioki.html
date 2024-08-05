@@ -31,13 +31,13 @@
         <div class="row">
             <div class="sidebar border border-right col-md-3 col-lg-2 p-3  bg-body-tertiary" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
                 <div class="offcanvas-header">
-                    <h5 class="offcanvas-title" id="offcanvasRightLabel">Offcanvas right</h5>                    
+                    <h4 class="offcanvas-title" id="offcanvasRightLabel" style="margin-bottom: 2rem;"><b>Demanda Energetica</b></h4>                    
                 </div>
                 <div class="offcanvas-body">
-                    <form action="/demand_display" method="post" enctype="multipart/form-data" >
+                    <form action="/demand_display" method="post" enctype="multipart/form-data" style="margin-bottom: 2rem;">
                         <div>
-                            <label for="file" class="form-label">Subir Archivo .xlxs</label>
-                            <input type="file" class="form-control form-control-lg" id="file" name="file" accept=".xlsx" required>
+                            <label for="file" class="form-label"><b>Subir Archivo .xlxs</b></label>
+                            <input type="file" class="form-control form-control-sm" id="file" name="file" accept=".xlsx" required>
                             <button type="submit" id="file-button" class="btn btn-primary mt-2" 
                             data-bs-toggle="tooltip" data-bs-placement="top"
                             data-bs-custom-class="custom-tooltip"
@@ -45,10 +45,10 @@
                         </div>
                     </form>
                     <form action="/demand_value_calculation" method="post" >
-                        <label for="file" class="form-label">Costo de Energia</label>
+                        <label for="file" class="form-label"><b>Costo de Energia</b></label>
                         <div class="input-group mb-3">
                             <span class="input-group-text" id="basic-addon1">$</span>
-                            <input type="number" class="form-control" id="costo_energia" name="costo_energia" placeholder="Costo Energia" min="100" step="0.001" required>
+                            <input type="number" class="form-control form-control-sm" id="costo_energia" name="costo_energia" placeholder="Costo Energia" min="100" step="0.001" required>
                         </div>                            
                         <button type="submit" id="agregar-costo" class="btn btn-primary  mt-2" 
                         data-bs-toggle="tooltip" data-bs-placement="top"
@@ -87,10 +87,9 @@
             
                                 </div>
                             </div>
-                            <div id="chart"></div> 
                         </div>
                         <div class="col-lg-6 col-sm-12 ms-sm-auto">
-                                <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto; margin-bottom: 2rem;">
+                            <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto; margin-bottom: 2rem;">
                                 <div class="card-body">
                                     <h3>Analisis Datos Demanda de Energia</h3>
                                         {% if db_ana_dem is not none %}                        
@@ -119,10 +118,17 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div id="chart1"></div>
+                        </div>                         
+                    </div> 
+                    <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;"> 
+                        <div class="col-lg-6 col-sm-12 ms-sm-auto">                            
+                            <div id="chart"></div> 
                         </div>
-                                         
-                        
+                        <div class="col-lg-6 col-sm-12 ms-sm-auto">
+                            <div id="chart1"></div>
+                        </div> 
+                    </div>                      
+                    <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;"> 
                         <div class="col">
                             {% if costo and costo is not none and consult_promedio is not none %} 
                                 <div class="card-body" style="margin-bottom: 2rem;">
@@ -153,7 +159,6 @@
                                         </table>                    
                                     </div>
                                 </div>
-                                <div id="chart2"></div>
                             {% endif %}
                         </div>
                         <div class="col">                            
@@ -171,27 +176,35 @@
                                                     <th>Pago</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                
-                                                    {% for item in consult_neto %}
+                                            <tbody>                                                
+                                                {% for item in consult_neto %}
                                                     <tr>
                                                         <td class="nombres"><b>{{ item[0] }}</b></td>
                                                         <td class="consumo_dia_w">{{ (item[1]) | round(2) }}</td>
                                                         <td class="consumo_mes_kw">{{ (item[1] / 1000) | round(2) }}</td>
                                                         <td class="pago">{{ ((item[1] / 1000) * costo) | round(2) }}</td>
                                                     </tr>
-                                                    {% endfor %}
-                                                
+                                                {% endfor %}                                                
                                             </tbody>
                                         </table>
                                         
                                     </div>
                                 </div>
+                            {% endif %}
+                        </div>
+                    </div> 
+                    <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;"> 
+                        <div class="col">
+                            {% if costo and costo is not none and consult_promedio is not none %}                                 
+                                <div id="chart2"></div>
+                            {% endif %}
+                        </div>
+                        <div class="col">                            
+                            {% if costo and costo is not none and consult_neto is not none %}                                
                                 <div id="chart3"></div>
                             {% endif %}
-                        </div> 
-                    </div>                        
-                        
+                        </div>
+                    </div>         
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             // Obtener los datos de la tabla y convertirlos en un array de objetos
