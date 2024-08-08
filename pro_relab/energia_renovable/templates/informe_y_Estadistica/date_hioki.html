@@ -31,7 +31,7 @@
         <div class="row">
             <div class="sidebar border border-right col-md-3 col-lg-2 p-3  bg-body-tertiary" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
                 <div class="offcanvas-header">
-                    <h4 class="offcanvas-title" id="offcanvasRightLabel" style="margin-bottom: 2rem;"><b>Demanda Energetica</b></h4>                    
+                    <h4 class="offcanvas-title" id="offcanvasRightLabel" style="margin-bottom: 2rem;color:#13447c;font-size: 22px;"><b>Demanda Energetica</b></h4>                    
                 </div>
                 <div class="offcanvas-body">
                     <form action="/demand_display" method="post" enctype="multipart/form-data" style="margin-bottom: 2rem;">
@@ -61,11 +61,11 @@
                 <div class="container" data-aos="fade-up">
                     <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;">  
                         <div class="col-lg-6 col-sm-12 ms-sm-auto">
-                            <div class="card card-flush h-md-50 mb-5 mb-xl-10" >
-                                <div class="card-body">
+                            <div class="card shadow-lg card-flush h-md-50 mb-5 mb-xl-10" style="padding: 1rem;height: 43rem;">
+                                <div class="card-body"  style="overflow-x: auto;">
                                     <h3>Datos Demanda de Energia</h3>
                                     {% if db_dem is not none %}
-                                    <table id="tabla" class="table table-responsive table table-hover">
+                                    <table id="tabla" class="table table-responsive table table-hover" >
                                         <thead class="table-primary">
                                             <tr>
                                                 <th>Fecha y Hora</th>
@@ -87,13 +87,16 @@
             
                                 </div>
                             </div>
+                            <div  class="card  shadow-lg card-flush h-md-50 mb-5 mb-xl-10">
+                                <div id="chart"></div> 
+                            </div>
                         </div>
                         <div class="col-lg-6 col-sm-12 ms-sm-auto">
-                            <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
-                                <div class="card-body">
+                            <div  class="card shadow-lg card-flush h-md-50 mb-5 mb-xl-10" style="padding: 1rem;height: 43rem;">
+                                <div class="card-body" style="overflow-x: auto;">
                                     <h3>Analisis Datos Demanda de Energia</h3>
                                         {% if db_ana_dem is not none %}                        
-                                        <table id="tabla" class="table table-responsive table table-hover">
+                                        <table id="tabla" class="table table-responsive table table-hover" >
                                             <thead class="table-primary">
                                                 <tr>
                                                     <th>Fecha </th>
@@ -118,37 +121,28 @@
                                     {% endif %}
                                 </div>
                             </div>
-                        </div>                         
-                    </div> 
-                    <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;"> 
-                        <div class="col-lg-6 col-sm-12 ms-sm-auto">
-                            <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
-                                <div id="chart"></div> 
-                            </div>
-                                
-                        </div>
-                        <div class="col-lg-6 col-sm-12 ms-sm-auto">
-                            <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
+                            <div  class="card  shadow-lg card-flush h-md-50 mb-5 mb-xl-10">
                                 <div id="chart1"></div> 
                             </div>
-                        </div> 
-                    </div>                      
+                        </div>                         
+                    </div> 
+                                        
                     <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;"> 
                         <div class="col">
                             {% if costo and costo is not none and consult_promedio is not none %} 
-                                <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
-                                    <div class="card-body" >
+                                <div  class="card shadow-lg card-flush h-md-50 mb-5 mb-xl-10" style="padding: 1rem;height: 30rem;">
+                                    <div class="card-body"  style="overflow-x: auto;" >
                                         <div class="container-fluid">
                                             <h3>Promedio</h3>
                                                                 
-                                            <table class="table table-responsive table table-hover" >
+                                            <table class="table table-responsive table-hover"  >
                                                 <thead class="table-primary">
                                                     <tr>
                                                         <th>-</th>
                                                         <th>Consumo (W)/día</th>
                                                         <th>Consumo (KW)/día</th>
                                                         <th>Consumo (KW)/mes</th>
-                                                        <th>Pago</th>
+                                                        <th>Pago ($)</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>                            
@@ -165,23 +159,26 @@
                                             </table>                    
                                         </div>
                                     </div>
+                                </div>
+                                <div  class="card  shadow-lg card-flush h-md-50 mb-5 mb-xl-10">
+                                    <div id="chart2"></div> 
                                 </div>                                
                             {% endif %}
                         </div>
                         <div class="col">                            
                             {% if costo and costo is not none and consult_neto is not none %}
-                                <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
-                                    <div class="card-body" >
+                                <div  class="card shadow-lg card-flush h-md-50 mb-5 mb-xl-10" style="padding: 1rem;height: 30rem;">
+                                    <div class="card-body" style="overflow-x: auto;" >
                                         <div class="container-fluid">
                                             <h3>Consumo Neto</h3>
                                                                 
-                                            <table  class="table table-responsive table table-hover" style="margin-bottom: 7rem;">
+                                            <table  class="table table-responsive table-hover" >
                                                 <thead class="table-primary">
                                                     <tr>
                                                         <th>-</th>
                                                         <th>Consumo (W)/día</th>
                                                         <th>Consumo (KW)/mes</th>
-                                                        <th>Pago</th>
+                                                        <th>Pago ($)</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>                                                
@@ -199,26 +196,12 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                            {% endif %}
-                        </div>
-                    </div> 
-                    <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;"> 
-                        <div class="col">
-                            {% if costo and costo is not none and consult_promedio is not none %}                                 
-                                <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
-                                    <div id="chart2"></div> 
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="col">                            
-                            {% if costo and costo is not none and consult_neto is not none %}                                
-                                <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
+                                <div  class="card  shadow-lg card-flush h-md-50 mb-5 mb-xl-10">
                                     <div id="chart3"></div> 
                                 </div>
                             {% endif %}
                         </div>
-                    </div>         
+                    </div>                       
                     <script>
                         document.addEventListener('DOMContentLoaded', function() {
                             // Obtener los datos de la tabla y convertirlos en un array de objetos
@@ -517,7 +500,7 @@
                                         data: consumoMesKWData
                                     },
                                     {
-                                        name: 'Pago',
+                                        name: 'Pago ($)',
                                         data: pagoData
                                     }
                                 ],
@@ -640,7 +623,7 @@
                                         data: consumoMesKWData
                                     },
                                     {
-                                        name: 'Pago',
+                                        name: 'Pago ($)',
                                         data: pagoData
                                     }
                                 ],
