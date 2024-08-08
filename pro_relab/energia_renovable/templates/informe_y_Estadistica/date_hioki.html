@@ -24,7 +24,7 @@
     });
 </script>
 
-<body >
+<body class="body-inicio">
     {% block navbar %} {% include 'layouts/navbar.html' %} {% endblock %}
     
     <section class="container-fluid">  
@@ -61,7 +61,7 @@
                 <div class="container" data-aos="fade-up">
                     <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;">  
                         <div class="col-lg-6 col-sm-12 ms-sm-auto">
-                            <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto; margin-bottom: 2rem;">
+                            <div class="card card-flush h-md-50 mb-5 mb-xl-10" >
                                 <div class="card-body">
                                     <h3>Datos Demanda de Energia</h3>
                                     {% if db_dem is not none %}
@@ -89,7 +89,7 @@
                             </div>
                         </div>
                         <div class="col-lg-6 col-sm-12 ms-sm-auto">
-                            <div class="card" style="border-block-color: rgba(50, 81, 220, 0.6);writing-mode: horizontal-tb;overflow: auto; margin-bottom: 2rem;">
+                            <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
                                 <div class="card-body">
                                     <h3>Analisis Datos Demanda de Energia</h3>
                                         {% if db_ana_dem is not none %}                        
@@ -121,87 +121,101 @@
                         </div>                         
                     </div> 
                     <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;"> 
-                        <div class="col-lg-6 col-sm-12 ms-sm-auto">                            
-                            <div id="chart"></div> 
+                        <div class="col-lg-6 col-sm-12 ms-sm-auto">
+                            <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
+                                <div id="chart"></div> 
+                            </div>
+                                
                         </div>
                         <div class="col-lg-6 col-sm-12 ms-sm-auto">
-                            <div id="chart1"></div>
+                            <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
+                                <div id="chart1"></div> 
+                            </div>
                         </div> 
                     </div>                      
                     <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;"> 
                         <div class="col">
                             {% if costo and costo is not none and consult_promedio is not none %} 
-                                <div class="card-body" style="margin-bottom: 2rem;">
-                                    <div class="container-fluid">
-                                        <h3>Promedio</h3>
-                                                            
-                                        <table class="table table-responsive table table-hover" >
-                                            <thead class="table-primary">
-                                                <tr>
-                                                    <th>-</th>
-                                                    <th>Consumo (W)/día</th>
-                                                    <th>Consumo (KW)/día</th>
-                                                    <th>Consumo (KW)/mes</th>
-                                                    <th>Pago</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>                            
-                                                {% for item in consult_promedio %}
-                                                <tr>
-                                                    <td class="promedio_nombres"><b>{{ item[0] }}</b></td>
-                                                    <td class="promedio_dia_w">{{ (item[1]) | round(2) }}</td>
-                                                    <td class="promedio_dia_kw">{{ (item[1] / 1000) | round(2) }}</td>
-                                                    <td class="promedio_mes_kw">{{ ((item[1] / 1000) * 30) | round(2) }}</td>
-                                                    <td class="promedio_pago">{{ (((item[1] / 1000) * 30) * costo) | round(2) }}</td>
-                                                </tr>
-                                                {% endfor %}                            
-                                            </tbody>
-                                        </table>                    
+                                <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
+                                    <div class="card-body" >
+                                        <div class="container-fluid">
+                                            <h3>Promedio</h3>
+                                                                
+                                            <table class="table table-responsive table table-hover" >
+                                                <thead class="table-primary">
+                                                    <tr>
+                                                        <th>-</th>
+                                                        <th>Consumo (W)/día</th>
+                                                        <th>Consumo (KW)/día</th>
+                                                        <th>Consumo (KW)/mes</th>
+                                                        <th>Pago</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>                            
+                                                    {% for item in consult_promedio %}
+                                                    <tr>
+                                                        <td class="promedio_nombres"><b>{{ item[0] }}</b></td>
+                                                        <td class="promedio_dia_w">{{ (item[1]) | round(2) }}</td>
+                                                        <td class="promedio_dia_kw">{{ (item[1] / 1000) | round(2) }}</td>
+                                                        <td class="promedio_mes_kw">{{ ((item[1] / 1000) * 30) | round(2) }}</td>
+                                                        <td class="promedio_pago">{{ (((item[1] / 1000) * 30) * costo) | round(2) }}</td>
+                                                    </tr>
+                                                    {% endfor %}                            
+                                                </tbody>
+                                            </table>                    
+                                        </div>
                                     </div>
-                                </div>
+                                </div>                                
                             {% endif %}
                         </div>
                         <div class="col">                            
                             {% if costo and costo is not none and consult_neto is not none %}
-                                <div class="card-body" style="margin-bottom: 2rem;">
-                                    <div class="container-fluid">
-                                        <h3>Consumo Neto</h3>
-                                                            
-                                        <table  class="table table-responsive table table-hover">
-                                            <thead class="table-primary">
-                                                <tr>
-                                                    <th>-</th>
-                                                    <th>Consumo (W)/día</th>
-                                                    <th>Consumo (KW)/mes</th>
-                                                    <th>Pago</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>                                                
-                                                {% for item in consult_neto %}
+                                <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
+                                    <div class="card-body" >
+                                        <div class="container-fluid">
+                                            <h3>Consumo Neto</h3>
+                                                                
+                                            <table  class="table table-responsive table table-hover" style="margin-bottom: 7rem;">
+                                                <thead class="table-primary">
                                                     <tr>
-                                                        <td class="nombres"><b>{{ item[0] }}</b></td>
-                                                        <td class="consumo_dia_w">{{ (item[1]) | round(2) }}</td>
-                                                        <td class="consumo_mes_kw">{{ (item[1] / 1000) | round(2) }}</td>
-                                                        <td class="pago">{{ ((item[1] / 1000) * costo) | round(2) }}</td>
+                                                        <th>-</th>
+                                                        <th>Consumo (W)/día</th>
+                                                        <th>Consumo (KW)/mes</th>
+                                                        <th>Pago</th>
                                                     </tr>
-                                                {% endfor %}                                                
-                                            </tbody>
-                                        </table>
-                                        
+                                                </thead>
+                                                <tbody>                                                
+                                                    {% for item in consult_neto %}
+                                                        <tr>
+                                                            <td class="nombres"><b>{{ item[0] }}</b></td>
+                                                            <td class="consumo_dia_w">{{ (item[1]) | round(2) }}</td>
+                                                            <td class="consumo_mes_kw">{{ (item[1] / 1000) | round(2) }}</td>
+                                                            <td class="pago">{{ ((item[1] / 1000) * costo) | round(2) }}</td>
+                                                        </tr>
+                                                    {% endfor %}                                                
+                                                </tbody>
+                                            </table>
+                                            
+                                        </div>
                                     </div>
                                 </div>
+                                
                             {% endif %}
                         </div>
                     </div> 
                     <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;"> 
                         <div class="col">
                             {% if costo and costo is not none and consult_promedio is not none %}                                 
-                                <div id="chart2"></div>
+                                <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
+                                    <div id="chart2"></div> 
+                                </div>
                             {% endif %}
                         </div>
                         <div class="col">                            
                             {% if costo and costo is not none and consult_neto is not none %}                                
-                                <div id="chart3"></div>
+                                <div  class="card card-flush h-md-50 mb-5 mb-xl-10">
+                                    <div id="chart3"></div> 
+                                </div>
                             {% endif %}
                         </div>
                     </div>         
