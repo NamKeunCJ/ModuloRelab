@@ -356,7 +356,7 @@ def irradiance_display():
     # Obtener más información de los datos tomados con la estación
     with get_db_connection() as conn:  # Abre una conexión a la base de datos
         with conn.cursor() as cur:  # Crea un cursor para ejecutar las consultas
-            cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia ORDER BY created_at desc ')  # Obtiene el promedio de irradiancia, máxima irradiancia y la fecha de creación
+            cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia ORDER BY created_at desc LIMIT 144;')  # Obtiene el promedio de irradiancia, máxima irradiancia y la fecha de creación
             db_irr = cur.fetchall()  # Obtiene todos los resultados de la consulta
             
     return render_template('informe_y_Estadistica/date_davis.html', db_irr=db_irr)

@@ -71,6 +71,19 @@ table.dataTable thead > tr > td.sorting_desc_disabled:after {
   line-height: 9px;
   font-size: 0.8em;
 }
+#tabla, #tabla2,#tablaG,.font-table {
+  font-size: 14px; /* Cambia este valor para ajustar el tamaño de la letra */
+}
+
+/* Cambia el tamaño de la fuente en el encabezado de la tabla */
+#tabla thead th {
+  font-size: 12px; /* Cambia este valor para ajustar el tamaño de la letra del encabezado */
+}
+
+/* Cambia el tamaño de la fuente en las celdas de la tabla */
+#tabla tbody td {
+  font-size: 14Px; /* Cambia este valor para ajustar el tamaño de la letra en las celdas */
+}
 table.dataTable thead > tr > th.sorting:before, table.dataTable thead > tr > th.sorting_asc:before, table.dataTable thead > tr > th.sorting_desc:before, table.dataTable thead > tr > th.sorting_asc_disabled:before, table.dataTable thead > tr > th.sorting_desc_disabled:before,
 table.dataTable thead > tr > td.sorting:before,
 table.dataTable thead > tr > td.sorting_asc:before,
