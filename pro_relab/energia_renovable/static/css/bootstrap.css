@@ -3181,10 +3181,10 @@ textarea.form-control-lg {
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.5;
-    color: var(--bs-body-color);
+    color: #fff;
     text-align: center;
     white-space: nowrap;
-    background-color: var(--bs-tertiary-bg);
+    background-color:  #8db0d8;
     border: var(--bs-border-width) solid var(--bs-border-color);
     border-radius: var(--bs-border-radius);
 }
@@ -4394,7 +4394,9 @@ fieldset:disabled .btn {
     border: 0;
     transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
 }
-
+.nav-span {    
+    color: #215975;    
+}
 .enlace-link {
     display: block;
     padding: var(--bs-nav-link-padding-y) var(--bs-nav-link-padding-x);

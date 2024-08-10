@@ -347,17 +347,29 @@ data_fetch_thread.daemon = True  # Para asegurarse de que el hilo se detenga al 
 data_fetch_thread.start()
 
 #Ruta para ir a la seccion de datos de irradiancia
-@app.route('/irradiance_display')
+@app.route('/irradiance_display',methods=['GET', 'POST'])
 def irradiance_display():
     user_id = session.get('user_id')
     if user_id is None:
         return redirect(url_for('inicio_sesion'))  
     
-    # Obtener más información de los datos tomados con la estación
-    with get_db_connection() as conn:  # Abre una conexión a la base de datos
-        with conn.cursor() as cur:  # Crea un cursor para ejecutar las consultas
-            cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia ORDER BY created_at desc LIMIT 144;')  # Obtiene el promedio de irradiancia, máxima irradiancia y la fecha de creación
-            db_irr = cur.fetchall()  # Obtiene todos los resultados de la consulta
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+
+    if request.method == 'POST':
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+        # Redirige a la misma ruta con parámetros en la URL para evitar el reenvío del formulario
+        return redirect(url_for('irradiance_display', start_date=start_date, end_date=end_date))
+
+    # Procesa los datos de la base de datos
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            if start_date and end_date:
+                cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia WHERE (created_at >= %s and created_at <= %s) and prom_irr!=0 ORDER BY created_at desc;', (start_date, end_date))
+            else:
+                cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia ORDER BY created_at desc LIMIT 144;')
+            db_irr = cur.fetchall()
             
     return render_template('informe_y_Estadistica/date_davis.html', db_irr=db_irr)
 
@@ -437,19 +449,24 @@ def demand_display():
         if file and file.filename.endswith('.xlsx'):
             try:
                 df_modelo = pd.read_excel(file, sheet_name='97intvl', header=0)
-                df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str), format='%Y-%m-%d %H:%M:%S')
-                data_to_insert = df_modelo[['Datetime', 'AvePsum']].values.tolist()
+                # Verificar si las columnas necesarias están presentes
+                required_columns = {'Date', 'Time', 'AvePsum'}
+                if not required_columns.issubset(df_modelo.columns):
+                    error_file=True
+                else:
+                    df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str), format='%Y-%m-%d %H:%M:%S')
+                    data_to_insert = df_modelo[['Datetime', 'AvePsum']].values.tolist()
 
-                '''# Leer el archivo Excel
-                df_modelo = pd.read_excel(file, sheet_name='97intvl', header=0)                
-                # Unir las columnas 'Date' y 'Time' en un solo campo 'Datetime'
-                df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str), format='%Y-%m-%d %H:%M:%S')
-                # Convertir 'Date' a formato de fecha para filtrado
-                df_modelo['Date'] = pd.to_datetime(df_modelo['Date']).dt.date
-                # Excluir el primer y último día
-                df_filtered = df_modelo[(df_modelo['Date'] > df_modelo['Date'].min()) & (df_modelo['Date'] < df_modelo['Date'].max())]
-                # Extraer solo las columnas específicas y convertir a lista de listas
-                data_to_insert = df_filtered[['Datetime', 'AvePsum']].values.tolist()'''
+                    '''# Leer el archivo Excel
+                    df_modelo = pd.read_excel(file, sheet_name='97intvl', header=0)                
+                    # Unir las columnas 'Date' y 'Time' en un solo campo 'Datetime'
+                    df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str), format='%Y-%m-%d %H:%M:%S')
+                    # Convertir 'Date' a formato de fecha para filtrado
+                    df_modelo['Date'] = pd.to_datetime(df_modelo['Date']).dt.date
+                    # Excluir el primer y último día
+                    df_filtered = df_modelo[(df_modelo['Date'] > df_modelo['Date'].min()) & (df_modelo['Date'] < df_modelo['Date'].max())]
+                    # Extraer solo las columnas específicas y convertir a lista de listas
+                    data_to_insert = df_filtered[['Datetime', 'AvePsum']].values.tolist()'''
                 
             except ValueError as e:
                 error_file=True
