@@ -101,3 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const exampleEl = document.getElementById('agregar-costo');
     const tooltip = new bootstrap.Tooltip(exampleEl);
 }); 
+document.addEventListener('DOMContentLoaded', function() {
+    const exampleEl = document.getElementById('datos_actuales');
+    const tooltip = new bootstrap.Tooltip(exampleEl);
+}); 
