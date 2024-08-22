@@ -566,5 +566,12 @@ def demand_value_calculation():
         
         return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem, consult_promedio=consult_promedio, consult_neto=consult_neto, costo = costo)
 
+#PREDICCION DE IRRADIANCIA
+@app.route('/irradiance_prediction')
+def irradiance_prediction():
+    prediction_g = 1
+    print (prediction_g)
+    return render_template('informe_y_Estadistica/date_davis.html',prediction_g = prediction_g)
+
 if __name__ == '__main__':
     app.run(debug=True)

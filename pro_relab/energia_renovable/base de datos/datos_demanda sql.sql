@@ -45,6 +45,9 @@ SELECT 'Pagaría a full' as nom_adem, SUM(con_adem)*10 FROM analisis_demanda WHE
 ---tabla analisis demanda
 SELECT fec_adem, exc_adem, con_adem, per_adem FROM analisis_demanda ORDER BY fec_adem ASC;
 
+--MODELO DE PREDICCION
+select * from dato_irradiancia where created_at >= '2024-08-13' and created_at < '2024-08-18' order by created_at desc;
+
 
 
 

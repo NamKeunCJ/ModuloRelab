@@ -11,11 +11,12 @@
                         <span class="badge bg-info-subtle text-info-emphasis rounded-pill"> <span class="small"><a id="datos_actuales" class="nav-span nav-link" href="/irradiance_display" 
                             data-bs-toggle="tooltip" data-bs-placement="top"
                             data-bs-custom-class="custom-tooltip"
-                            data-bs-title="Ingresar a datos actuales.">Actuales</a></span></span>
+                            data-bs-title="Ingresar a datos actuales.">Actuales</a></span></span>                        
                     </h4>                    
                 </div>
-                <div class="offcanvas-body">                    
-                    <form id="irradiance-form" action="/irradiance_display" method="post">
+                <div class="offcanvas-body"> 
+                    <label for="end_date" class="form-label" style="margin-bottom: 1rem;"><b>BUSCAR DATOS G</b></label>                   
+                    <form id="irradiance-form" action="/irradiance_display" method="post" >
                         <label for="start_date" class="form-label"><b>Fecha Inicio</b></label>
                         <div class="input-group mb-3">
                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar3"></i></span>
@@ -30,7 +31,10 @@
                         data-bs-toggle="tooltip" data-bs-placement="top"
                         data-bs-custom-class="custom-tooltip"
                         data-bs-title="Asegurate de buscar los dias correctamente.">Buscar</button>
-                    </form>                      
+                    </form>
+                    <hr>
+                    <label for="end_date" class="form-label" style="margin-bottom: 1rem;"><b>GENERAR PREDICCION</b></label>
+                    <a class="btn btn-primary"  href="/irradiance_prediction" >Generar</a>                  
                 </div>
             </div>             
             
@@ -38,7 +42,12 @@
                 <div class="container" data-aos="fade-up">
                     <div class="row" style="margin-bottom: 2rem; margin-top: 2rem;">
                         <div class="col ms-sm-auto">
-                            {% block date_davis_table %} {% include 'informe_y_Estadistica/date_davis_table.html' %} {% endblock %}
+                            
+                            {% if prediction_g and prediction_g == 1 %}
+                                {% block prediction_g %} {% include 'informe_y_Estadistica/prediction_g.html' %} {% endblock %}                              
+                            {% else %} 
+                                {% block date_davis_table %} {% include 'informe_y_Estadistica/date_davis_table.html' %} {% endblock %}                             
+                            {% endif %}
                         </div>
                         
                     </div>                  
