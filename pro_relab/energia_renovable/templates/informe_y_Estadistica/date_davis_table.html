@@ -149,7 +149,7 @@
                             headerValue: 'Valor',
                             categoryFormatter(x) {
                                 // Formatear la fecha y hora para la exportación CSV
-                                return new Date(x).toLocaleString();
+                                return new Date(x).toLocaleDateString() + ' ' + new Date(x).toLocaleTimeString();
                             },
                             valueFormatter(y) {
                                 return y.toFixed(2); // Ajusta el formato del valor si es necesario
