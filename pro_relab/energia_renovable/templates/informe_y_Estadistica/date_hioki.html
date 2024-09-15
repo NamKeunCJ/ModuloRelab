@@ -34,6 +34,7 @@
                     <h4 class="offcanvas-title" id="offcanvasRightLabel" style="margin-bottom: 2rem;color:#13447c;font-size: 22px;"><b>Demanda Energetica</b></h4>                    
                 </div>
                 <div class="offcanvas-body">
+                    {% if 'user_rol' in session and session['user_rol'] == 'Administrador' %}
                     <form action="/demand_display" method="post" enctype="multipart/form-data" style="margin-bottom: 2rem;">
                         <div>
                             <label for="file" class="form-label"><b>Subir Archivo .xlxs</b></label>
@@ -45,6 +46,7 @@
                         </div>
                     </form>
                     <hr>
+                    {% endif %}
                     <form action="/demand_value_calculation" method="post" >
                         <label for="file" class="form-label"><b>Costo de Energia</b></label>
                         <div class="input-group mb-3">

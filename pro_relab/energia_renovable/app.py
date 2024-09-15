@@ -439,8 +439,11 @@ def consultas_demanda():
 @app.route('/demand_display', methods=['GET', 'POST'])
 def demand_display():
     user_id = session.get('user_id')
+    user_rol = session.get('user_rol')
+    print(user_rol)
     if user_id is None:
         return redirect(url_for('inicio_sesion'))
+            
     error_file=False
     if request.method == 'POST':
         file = request.files.get('file')
@@ -551,7 +554,7 @@ def demand_display():
                                 """, (energia, fecha))
                             conn.commit()
     db_dem, db_ana_dem,consult_promedio, consult_neto = consultas_demanda()
-    return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem)                       
+    return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem, user_rol=user_rol)                       
 
 @app.route('/demand_value_calculation', methods=['POST'])
 def demand_value_calculation():
