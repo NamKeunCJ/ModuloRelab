@@ -267,7 +267,6 @@ def update_user():
 def davis():
     while True:
         print("Dato recibido")
-        user_id = 1
         API_KEY = "jxhpskyfalmhlegx9mwqnwplcpmoltc0"
         STATION_ID = "181874"
         headers = {"X-Api-Secret": "sxchcxmtchcydblvcgbknst9mumap1cq"}
@@ -313,19 +312,18 @@ def davis():
                                     db_data.append((
                                         solar_radiation_avg,
                                         solar_radiation_hi,
-                                        date_time_string,
-                                        user_id
+                                        date_time_string
                                     ))
 
                         with get_db_connection() as conn:
                             with conn.cursor() as cursor:
                                 for data in db_data:
-                                    prom_irr, max_irr, created_at, id_usu = data
+                                    prom_irr, max_irr, created_at = data
                                     
                                     insert_query = """
                                         INSERT INTO dato_irradiancia (
-                                            prom_irr, max_irr, created_at, id_usu
-                                        ) VALUES (%s, %s, %s, %s)
+                                            prom_irr, max_irr, created_at
+                                        ) VALUES (%s, %s, %s)
                                         ON CONFLICT (created_at) DO NOTHING
                                     """
 
