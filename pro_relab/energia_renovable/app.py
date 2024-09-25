@@ -272,73 +272,60 @@ def davis():
         headers = {"X-Api-Secret": "sxchcxmtchcydblvcgbknst9mumap1cq"}
 
         end_timestamp = int(time.time())
-        print("End timestamp:", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_timestamp)))
-
-        six_months_seconds = 30 * 24 * 3600
-
-        start_timestamp = end_timestamp - six_months_seconds
-        print("Start timestamp:", time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_timestamp)))
-
+        start_timestamp = end_timestamp - (30 * 24 * 3600)
         max_duration_seconds = 86400
 
-        current_end_timestamp = end_timestamp
-        while current_end_timestamp > start_timestamp:
-            current_start_timestamp = max(current_end_timestamp - max_duration_seconds, start_timestamp)
-            base_url = "https://api.weatherlink.com/v2/historic"
-            url = f"{base_url}/{STATION_ID}?api-key={API_KEY}&start-timestamp={current_start_timestamp}&end-timestamp={current_end_timestamp}"
-
+        while end_timestamp > start_timestamp:
+            current_start = max(end_timestamp - max_duration_seconds, start_timestamp)
+            url = f"https://api.weatherlink.com/v2/historic/{STATION_ID}?api-key={API_KEY}&start-timestamp={current_start}&end-timestamp={end_timestamp}"
+            
             try:
                 response = requests.get(url, headers=headers)
                 if response.status_code == 200:
-                    data = response.json()
-                    if isinstance(data.get('sensors'), list):
-                        irradiance_data = []
-                        db_data = []
-                        for sensor_data in data['sensors']:
-                            if isinstance(sensor_data.get('data'), list):
-                                for inner_data in sensor_data['data']:
-                                    solar_radiation_avg = inner_data.get('solar_rad_avg')
-                                    solar_radiation_hi = inner_data.get('solar_rad_hi')
-                                    solar_radiation_ene = inner_data.get('solar_energy')
-                                    date_time_string = datetime.fromtimestamp(inner_data.get('ts')).strftime('%Y-%m-%d %H:%M:%S')
+                    data = response.json().get('sensors', [])
+                    db_data = []
 
-                                    irradiance_data.append({
-                                        "date_time": date_time_string,
-                                        "avg_irradiance": solar_radiation_avg,
-                                        "highest_irradiance": solar_radiation_hi,
-                                        "solar_energy": solar_radiation_ene
-                                    })
+                    for sensor in data:
+                        last_timestamp = None
+                        for inner_data in sensor.get('data', []):
+                            ts = inner_data.get('ts')
+                            if last_timestamp:
+                                for i in range((ts - last_timestamp) // 300 - 1):
+                                    missing_ts = last_timestamp + (i + 1) * 300
+                                    previous_year_data = get_previous_year_data(missing_ts)
+                                    db_data.append((previous_year_data or (None, None), datetime.fromtimestamp(missing_ts).strftime('%Y-%m-%d %H:%M:%S')))
+                            
+                            avg, hi = inner_data.get('solar_rad_avg'), inner_data.get('solar_rad_hi')
+                            db_data.append(((avg, hi), datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')))
+                            last_timestamp = ts
 
-                                    db_data.append((
-                                        solar_radiation_avg,
-                                        solar_radiation_hi,
-                                        date_time_string
-                                    ))
-
-                        with get_db_connection() as conn:
-                            with conn.cursor() as cursor:
-                                for data in db_data:
-                                    prom_irr, max_irr, created_at = data
-                                    
-                                    insert_query = """
-                                        INSERT INTO dato_irradiancia (
-                                            prom_irr, max_irr, created_at
-                                        ) VALUES (%s, %s, %s)
-                                        ON CONFLICT (created_at) DO NOTHING
-                                    """
-
-                                    cursor.execute(insert_query, data)
+                    with get_db_connection() as conn:
+                        with conn.cursor() as cursor:
+                            cursor.executemany("""
+                                INSERT INTO dato_irradiancia (prom_irr, max_irr, created_at)
+                                VALUES (%s, %s, %s)
+                                ON CONFLICT (created_at) DO NOTHING
+                            """, [(prom, max_, created_at) for (prom, max_), created_at in db_data])
 
                 elif response.status_code == 400:
-                    print("Error 400: Solicitud incorrecta. Verifique los parámetros de la solicitud.")
-                    print(response.json())
+                    print("Error 400: Solicitud incorrecta", response.json())
 
             except requests.RequestException as e:
-                print(f"Error al solicitar los datos de la API: {e}")
+                print(f"Error en la API: {e}")
 
-            current_end_timestamp = current_start_timestamp - 1
+            end_timestamp = current_start - 1
 
         time.sleep(300)
+
+def get_previous_year_data(ts):
+    query = "SELECT prom_irr, max_irr FROM dato_irradiancia WHERE created_at = %s"
+    one_year_ago = (datetime.fromtimestamp(ts) - timedelta(days=365)).strftime('%Y-%m-%d %H:%M:%S')
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(query, (one_year_ago,))
+            return cursor.fetchone()
+        
 # Crear un hilo para la función davis
 data_fetch_thread = threading.Thread(target=davis)
 data_fetch_thread.daemon = True  # Para asegurarse de que el hilo se detenga al cerrar la aplicación
