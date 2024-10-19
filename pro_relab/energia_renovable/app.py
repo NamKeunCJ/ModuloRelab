@@ -558,8 +558,18 @@ def demand_value_calculation():
 @app.route('/irradiance_prediction')
 def irradiance_prediction():
     prediction_g = 1
-    print (prediction_g)
-    return render_template('informe_y_Estadistica/date_davis.html',prediction_g = prediction_g)
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT prom_irr, max_irr, created_at 
+                FROM ( SELECT prom_irr, max_irr, created_at 
+                    FROM dato_irradiancia 
+                    WHERE created_at::time >= '06:00:00' AND created_at::time < '19:00:00' AND created_at::date < current_date 
+                    ORDER BY created_at desc LIMIT 156) as consulta
+                ORDER BY created_at asc;
+            """)
+            db_irr = cur.fetchall()
+    return render_template('informe_y_Estadistica/date_davis.html',prediction_g = prediction_g, db_irr=db_irr)
 
 if __name__ == '__main__':
     app.run(debug=True)
