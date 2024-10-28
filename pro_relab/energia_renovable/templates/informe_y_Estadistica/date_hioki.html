@@ -19,7 +19,10 @@
                     "next": "Siguiente",
                     "previous": "Anterior"
                 }
-            }
+            },
+            "order": [
+                [0, "desc"]
+            ]
         });
     });
 </script>
@@ -35,29 +38,42 @@
                 </div>
                 <div class="offcanvas-body">
                     {% if 'user_rol' in session and session['user_rol'] == 'Administrador' %}
-                    <form action="/demand_display" method="post" enctype="multipart/form-data" style="margin-bottom: 2rem;">
-                        <div>
-                            <label for="file" class="form-label"><b>Subir Archivo .xlxs</b></label>
-                            <input type="file" class="form-control form-control-sm" id="file" name="file" accept=".xlsx" required>
-                            <button type="submit" id="file-button" class="btn btn-primary mt-2 " 
-                            data-bs-toggle="tooltip" data-bs-placement="top"
-                            data-bs-custom-class="custom-tooltip"
-                            data-bs-title="Asegurate que el archivo Excel, tenga la columna AvePSum.">Subir</button>
-                        </div>
-                    </form>
-                    <hr>
+                        <form action="/demand_display" method="post" enctype="multipart/form-data" style="margin-bottom: 2rem;">
+                            <div>
+                                <label for="file" class="form-label"><b>Subir Archivo .xlsx</b></label>
+                                <input type="file" class="form-control form-control-sm" id="file" name="file" accept=".xlsx" required>
+                                <button type="submit" class="tooltip_btn btn btn-primary mt-2 " 
+                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                data-bs-custom-class="custom-tooltip"
+                                data-bs-title="Asegurate que el archivo Excel, tenga la columna AvePSum.">Subir</button>
+                            </div>
+                        </form>                    
+                        <hr class="border border-dark border-1 opacity-75">
                     {% endif %}
-                    <form action="/demand_value_calculation" method="post" >
-                        <label for="file" class="form-label"><b>Costo de Energia</b></label>
+                    <label for="end_date" class="form-label" style="margin-bottom: 1rem;"><b>BUSCAR DATOS DE DEMANDA ENERGETICA</b></label>                   
+                    <form id="demand-form" action="/demand_display" method="post">
+                        <label for="start_date" class="form-label"><b>Fecha Inicio</b></label>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar3"></i></span>
+                            <input type="date" class="form-control form-control-sm" id="start_date" name="start_date" required>
+                        </div> 
+                        <label for="end_date" class="form-label"><b>Fecha Final</b></label>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar3"></i></span>
+                            <input type="date" class="form-control form-control-sm" id="end_date" name="end_date" required>
+                        </div>
+                        <label for="costo_energia" class="form-label"><b>Costo de Energía</b></label>
                         <div class="input-group mb-3">
                             <span class="input-group-text" id="basic-addon1">$</span>
-                            <input type="number" class="form-control form-control-sm" id="costo_energia" name="costo_energia" placeholder="Costo Energia" min="100" step="0.001" required>
+                            <input type="number" class="form-control form-control-sm" id="costo_energia" name="costo_energia" placeholder="Costo Energía" min="100" step="0.001" required>
                         </div>                            
-                        <button type="submit" id="agregar-costo" class="btn btn-primary  mt-2" 
+                        <button type="submit" class="tooltip_btn btn btn-primary mt-2" 
                         data-bs-toggle="tooltip" data-bs-placement="top"
                         data-bs-custom-class="custom-tooltip"
-                        data-bs-title="Asegurate que el costo de energia sea correcto.">Agregar</button>
-                    </form>  
+                        data-bs-title="Asegurate de buscar los días correctamente y añadir el valor de energía actual.">Buscar y Calcular</button>
+                    </form>
+                    
+                     
                 </div>
             </div> 
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
@@ -71,7 +87,7 @@
                                     <table id="tabla" class="table table-responsive table table-hover" >
                                         <thead class="table-primary">
                                             <tr>
-                                                <th>Fecha y Hora</th>
+                                                <th>Fecha y Hora Ultimo Dato</th>
                                                 <th>Demanda Energetica</th>
                                             </tr>
                                         </thead>

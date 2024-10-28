@@ -7,7 +7,14 @@ import time
 import requests # elementos para datos davis
 import xml.etree.ElementTree as ET # elementos para datos davis
 import pandas as pd #Extrer los datos del archivo plano
-
+###############################################################################
+#LIBRERIAS PARA EL MODELO DE PREDICCION
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+import tensorflow as tf
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+###############################################################################
 
 # Crear una instancia de la aplicación Flask
 app = Flask(__name__)
@@ -372,204 +379,282 @@ def get_latest_irradiance_data():
     
     return jsonify(data)  # Devuelve los datos en formato JSON
 
-def consultas_demanda():
+def consultas_demanda(start_date, end_date):
     # Obtener más información de los datos tomados con el HIOKI
     with get_db_connection() as conn:
         with conn.cursor() as cur:
+            if not start_date or not end_date:
+                cur.execute("SELECT MAX(created_at) FROM dato_demanda")
+                last_date = cur.fetchone()[0]  # Obtener la última fecha
+                if last_date:
+                    start_date = (last_date - timedelta(days=19)).strftime('%Y-%m-%d')
+                    end_date = last_date.strftime('%Y-%m-%d')
+
+            # Parámetros de fecha
+            date_params = (start_date, end_date)
+
+            # Consulta para db_dem
             cur.execute("""
                 SELECT SUM(dat_dem) AS total_dem, to_char(created_at, 'YYYY-MM-DD HH24:00:00') AS datetime
-                FROM dato_demanda
+                FROM dato_demanda WHERE created_at >= %s AND created_at < %s
                 GROUP BY to_char(created_at, 'YYYY-MM-DD HH24:00:00')
                 ORDER BY to_char(created_at, 'YYYY-MM-DD HH24:00:00') DESC;
-            """)
+            """, date_params)
             db_dem = cur.fetchall()
+
+            # Consulta para db_ana_dem
             cur.execute("""
-                SELECT fec_adem, exc_adem, con_adem, per_adem FROM analisis_demanda ORDER BY fec_adem ASC;
-            """)
+                SELECT fec_adem, exc_adem, con_adem, per_adem 
+                FROM analisis_demanda WHERE fec_adem >= %s AND fec_adem < %s
+                ORDER BY fec_adem ASC;
+            """, date_params)
             db_ana_dem = cur.fetchall()
-            # Lista de consulta_promedio
+            # Consultas promedio
+            consulta_promedio_sql = """
+                SELECT %s AS nom_adem, round(CAST(AVG({column}) AS numeric), 2)
+                FROM analisis_demanda WHERE fec_adem >= %s AND fec_adem < %s {extra_condition};
+            """
             consulta_promedio = [
-                "SELECT 'Promedio consumo neto' as nom_adem, round(CAST(AVG(exc_adem) AS numeric), 2) FROM analisis_demanda WHERE per_adem < -2500 AND per_adem IS NOT NULL;",
-                "SELECT 'Promedio actual neto' as nom_adem, round(CAST(AVG(con_adem) AS numeric), 2) FROM analisis_demanda WHERE per_adem < -2500 AND per_adem IS NOT NULL;",
-                "SELECT 'Energía perdida' as nom_adem, round(CAST(AVG(per_adem) AS numeric), 2) FROM analisis_demanda WHERE per_adem < -2500 AND per_adem IS NOT NULL;",
-                "SELECT 'Pagaría a full' as nom_adem, round(CAST(AVG(con_adem) AS numeric), 2) FROM analisis_demanda WHERE per_adem IS NULL;",                
+                ('Promedio consumo neto', 'exc_adem', 'AND per_adem < -2500 AND per_adem IS NOT NULL'),
+                ('Promedio actual neto', 'con_adem', 'AND per_adem < -2500 AND per_adem IS NOT NULL'),
+                ('Energía perdida', 'per_adem', 'AND per_adem < -2500 AND per_adem IS NOT NULL'),
+                ('Pagaría a full', 'con_adem', 'AND per_adem IS NULL')
             ]
-            
-            # Ejecutar consulta_promedio y almacenar resultados
-            consult_promedio= []
-            for consulta in consulta_promedio:
-                cur.execute(consulta)
+
+            consult_promedio = []
+            for nom_adem, column, extra_condition in consulta_promedio:
+                cur.execute(consulta_promedio_sql.format(column=column, extra_condition=extra_condition), (nom_adem, *date_params))
                 result = cur.fetchone()
-                if result:
-                    consult_promedio.append((result[0], float(result[1]) if result[1] is not None else None))
-                else:
-                    consult_promedio.append((None, None))
-            # Lista de consulta_neto
+                consult_promedio.append((result[0], float(result[1]) if result and result[1] is not None else 0.0))
+
+
+            # Consultas neto
+            consulta_neto_sql = """
+                SELECT %s AS nom_adem, round(CAST(SUM({column}) AS numeric), 2)*{factor}
+                FROM analisis_demanda WHERE fec_adem >= %s AND fec_adem < %s {extra_condition};
+            """
             consulta_neto = [
-                "SELECT 'Consumo neto' as nom_adem, round(CAST(SUM(exc_adem) AS numeric), 2)*1.5 FROM analisis_demanda;",
-                "SELECT 'Consumo actual neto' as nom_adem, round(CAST(SUM(con_adem) AS numeric), 2)*1.5 FROM analisis_demanda;",
-                "SELECT 'Energía perdida' as nom_adem, round(CAST(SUM(per_adem) AS numeric), 2)*1.5 FROM analisis_demanda;",
-                "SELECT 'Pagaría a full' as nom_adem, round(CAST(SUM(con_adem) AS numeric), 2)*10 FROM analisis_demanda WHERE per_adem IS NULL;"
+                ('Consumo neto', 'exc_adem', 1.5, ''),
+                ('Consumo actual neto', 'con_adem', 1.5, ''),
+                ('Energía perdida', 'per_adem', 1.5, ''),
+                ('Pagaría a full', 'con_adem', 10, 'AND per_adem IS NULL')
             ]
-            
-            # Ejecutar consulta_neto y almacenar resultados
-            consult_neto= []
-            for consulta in consulta_neto:
-                cur.execute(consulta)
+
+            consult_neto = []
+            for nom_adem, column, factor, extra_condition in consulta_neto:
+                cur.execute(consulta_neto_sql.format(column=column, factor=factor, extra_condition=extra_condition), (nom_adem, *date_params))
                 result = cur.fetchone()
-                if result:
-                    consult_neto.append((result[0], float(result[1]) if result[1] is not None else None))
-                else:
-                    consult_neto.append((None, None))
-    return db_dem, db_ana_dem,consult_promedio, consult_neto
+                consult_neto.append((result[0], float(result[1]) if result and result[1] is not None else 0.0))
+
+
+
+    return db_dem, db_ana_dem, consult_promedio, consult_neto
+
 
 @app.route('/demand_display', methods=['GET', 'POST'])
 def demand_display():
     user_id = session.get('user_id')
-    user_rol = session.get('user_rol')
-    print(user_rol)
     if user_id is None:
         return redirect(url_for('inicio_sesion'))
-            
-    error_file=False
+
+    start_date = end_date = costo = None
+    error_file = False
+
     if request.method == 'POST':
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+        try:
+            costo = float(request.form.get('costo_energia', 0.0))  # Default value 0.0 if not provided
+        except (ValueError, TypeError):
+            costo = 0.0  # O cualquier valor predeterminado
+
+
+        if not start_date or not end_date:
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT MAX(created_at) FROM dato_demanda")
+                    last_date = cursor.fetchone()[0]
+            
+            if last_date:
+                start_date = (last_date - timedelta(days=10)).strftime('%Y-%m-%d')
+                end_date = last_date.strftime('%Y-%m-%d')
+
+        # Procesar archivo excel si existe
         file = request.files.get('file')
         if file and file.filename.endswith('.xlsx'):
             try:
-                df_modelo = pd.read_excel(file, sheet_name='97intvl', header=0)
-                # Verificar si las columnas necesarias están presentes
+                df_modelo = pd.read_excel(file, sheet_name='97intvl')
                 required_columns = {'Date', 'Time', 'AvePsum'}
                 if not required_columns.issubset(df_modelo.columns):
-                    error_file=True
+                    error_file = True
                 else:
-                    df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str), format='%Y-%m-%d %H:%M:%S')
+                    df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str))
                     data_to_insert = df_modelo[['Datetime', 'AvePsum']].values.tolist()
+            except ValueError:
+                error_file = True
 
-                    '''# Leer el archivo Excel
-                    df_modelo = pd.read_excel(file, sheet_name='97intvl', header=0)                
-                    # Unir las columnas 'Date' y 'Time' en un solo campo 'Datetime'
-                    df_modelo['Datetime'] = pd.to_datetime(df_modelo['Date'].astype(str) + ' ' + df_modelo['Time'].astype(str), format='%Y-%m-%d %H:%M:%S')
-                    # Convertir 'Date' a formato de fecha para filtrado
-                    df_modelo['Date'] = pd.to_datetime(df_modelo['Date']).dt.date
-                    # Excluir el primer y último día
-                    df_filtered = df_modelo[(df_modelo['Date'] > df_modelo['Date'].min()) & (df_modelo['Date'] < df_modelo['Date'].max())]
-                    # Extraer solo las columnas específicas y convertir a lista de listas
-                    data_to_insert = df_filtered[['Datetime', 'AvePsum']].values.tolist()'''
-                
-            except ValueError as e:
-                error_file=True
-
-            if  not error_file:
+            if not error_file:
                 with get_db_connection() as conn:
                     with conn.cursor() as cursor:
                         duplicado = False
                         for date_time, ave_psum in data_to_insert:
-                            search_query = """
+                            cursor.execute("""
                                 SELECT 1 FROM dato_demanda
                                 WHERE dat_dem = %s AND created_at = %s AND id_usu = %s
-                            """
-                            cursor.execute(search_query, (ave_psum, date_time, user_id))
+                            """, (ave_psum, date_time, user_id))
+
                             if cursor.fetchone():
                                 duplicado = True
                                 break
-                            insert_query = """
+
+                            cursor.execute("""
                                 INSERT INTO dato_demanda (dat_dem, created_at, id_usu)
                                 VALUES (%s, %s, %s)
-                            """
-                            cursor.execute(insert_query, (ave_psum, date_time, user_id))
+                            """, (ave_psum, date_time, user_id))
+
                         conn.commit()
 
                         if not duplicado:
-                            # Consultas para análisis
-                            queries = {
-                                'excedente': """
-                                    SELECT DATE(created_at), SUM(dat_dem) FROM dato_demanda
-                                    GROUP BY DATE(created_at)
-                                    ORDER BY DATE(created_at) DESC;
-                                """,
-                                'consumo': """
-                                    SELECT DATE(datetime), SUM(total_dem) 
-                                    FROM (
-                                        SELECT to_char(created_at, 'YYYY-MM-DD HH24:00:00') AS datetime, SUM(dat_dem) AS total_dem
-                                        FROM dato_demanda 
-                                        GROUP BY to_char(created_at, 'YYYY-MM-DD HH24:00:00')
-                                    ) AS datos
-                                    WHERE total_dem >= 0 
-                                    GROUP BY DATE(datetime) 
-                                    ORDER BY DATE(datetime) DESC;
-                                """,
-                                'energia_perdida': """
-                                    SELECT DATE(datetime), SUM(total_dem) 
-                                    FROM (
-                                        SELECT to_char(created_at, 'YYYY-MM-DD HH24:00:00') AS datetime, SUM(dat_dem) AS total_dem
-                                        FROM dato_demanda 
-                                        GROUP BY to_char(created_at, 'YYYY-MM-DD HH24:00:00')
-                                    ) AS datos
-                                    WHERE total_dem <= 0  
-                                    GROUP BY DATE(datetime) 
-                                    ORDER BY DATE(datetime) DESC;
-                                """
-                            }
-                            
-                            results = {}
-                            for key, query in queries.items():
-                                cursor.execute(query)
-                                results[key] = cursor.fetchall()
+                            # Consultas de análisis
+                            db_dem, db_ana_dem, consult_promedio, consult_neto = consultas_demanda(start_date, end_date)
+                            return render_template(
+                                'informe_y_Estadistica/date_hioki.html',
+                                db_dem=db_dem, db_ana_dem=db_ana_dem,
+                                consult_promedio=consult_promedio, consult_neto=consult_neto,
+                                costo=costo
+                            )
 
-                            # Insertar resultados en analisis_demanda y obtener id_adem
-                            for (fecha, excedente), (_, consumo) in zip(results['excedente'], results['consumo']):
-                                insert_analisis_query = """
-                                    INSERT INTO analisis_demanda (fec_adem, exc_adem, con_adem)
-                                    VALUES (%s, %s, %s)
-                                    RETURNING id_adem
-                                """
-                                cursor.execute(insert_analisis_query, (fecha, excedente, consumo))
-                                id_adem = cursor.fetchone()[0]
-                                cursor.execute("""
-                                    UPDATE dato_demanda
-                                    SET id_adem = %s
-                                    WHERE DATE(created_at) = %s
-                                """, (id_adem, fecha))
-                            conn.commit()
+    # Consultas sin archivo cargado
+    db_dem, db_ana_dem, consult_promedio, consult_neto = consultas_demanda(start_date, end_date)
+    return render_template(
+        'informe_y_Estadistica/date_hioki.html',
+        db_dem=db_dem, db_ana_dem=db_ana_dem,
+        consult_promedio=consult_promedio, consult_neto=consult_neto, costo=costo
+    )
 
-                            # Actualizar el campo per_adem en analisis_demanda
-                            for fecha, energia in results['energia_perdida']:
-                                cursor.execute("""
-                                    UPDATE analisis_demanda
-                                    SET per_adem = %s
-                                    WHERE fec_adem = %s
-                                """, (energia, fecha))
-                            conn.commit()
-    db_dem, db_ana_dem,consult_promedio, consult_neto = consultas_demanda()
-    return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem, user_rol=user_rol)                       
 
-@app.route('/demand_value_calculation', methods=['POST'])
-def demand_value_calculation():
-    # Verificar si el método de la solicitud es POST
-    if request.method == 'POST': 
-        costo = float(request.form['costo_energia'])  # Obtener el valor del costo de energia
-        db_dem, db_ana_dem,consult_promedio, consult_neto = consultas_demanda()
-        if db_dem == []:
-            return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem)
-        
-        return render_template('informe_y_Estadistica/date_hioki.html', db_dem=db_dem, db_ana_dem=db_ana_dem, consult_promedio=consult_promedio, consult_neto=consult_neto, costo = costo)
 
 #PREDICCION DE IRRADIANCIA
 @app.route('/irradiance_prediction')
 def irradiance_prediction():
     prediction_g = 1
+    # Ruta donde se encuentra el modelo
+    ruta = 'C:/PROYECTO/Relab/pro_relab/energia_renovable/modelo/'
+    
     with get_db_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT prom_irr, max_irr, created_at 
-                FROM ( SELECT prom_irr, max_irr, created_at 
+                SELECT prom_irr, created_at 
+                FROM (
+                    SELECT prom_irr, created_at 
                     FROM dato_irradiancia 
-                    WHERE created_at::time >= '06:00:00' AND created_at::time < '19:00:00' AND created_at::date < current_date 
-                    ORDER BY created_at desc LIMIT 156) as consulta
-                ORDER BY created_at asc;
+                    WHERE created_at::time >= '06:00:00' 
+                    AND created_at::time <= '19:00:00' 
+                    AND created_at::date < current_date
+                    AND created_at::date BETWEEN current_date - INTERVAL '30 days' AND current_date - INTERVAL '1 day'
+                    ORDER BY created_at DESC 
+                ) as consulta
+                ORDER BY created_at ASC;
             """)
-            db_irr = cur.fetchall()
-    return render_template('informe_y_Estadistica/date_davis.html',prediction_g = prediction_g, db_irr=db_irr)
+            db = cur.fetchall()
+
+    
+
+    # Convertir los resultados a un DataFrame de pandas
+    df = pd.DataFrame(db, columns=["prom_irr", "created_at"])
+
+    # Establecer la columna 'created_at' como índice para el formato tabular (asignando el resultado)
+    df_filtrado_nuevos_datos = df.set_index('created_at', inplace=False)
+    print(df_filtrado_nuevos_datos)
+    # Extraer los valores de irradiancia
+    DATOS_NUEVOS = df_filtrado_nuevos_datos['prom_irr'].values
+
+
+    # Escalar los nuevos datos entre -1 y 1
+    scaler_nuevos = MinMaxScaler(feature_range=(-1, 1))
+    datos_nuevos_escalados = scaler_nuevos.fit_transform(DATOS_NUEVOS.reshape(-1, 1))
+
+    # Definir las secuencias para entrenamiento y predicción basados en el tamaño de las secuencias de entrada
+    Dias_pasados = 7  # N
+    LONG_SEC = 156 * Dias_pasados  # Tamaño de entrada
+    Dias_futuros = 1  # Número de días a predecir
+    N_STEPS = 156  # Tamaño de salida (para 1 día, 156 valores)
+
+    print(f"Tamaño de los datos escalados nuevos: {len(datos_nuevos_escalados)}")
+
+    # Generar secuencias solo si hay suficientes datos
+    if len(datos_nuevos_escalados) > LONG_SEC + N_STEPS:
+        X_train_nuevos, Y_train_nuevos = [], []
+        for i in range(len(datos_nuevos_escalados) - LONG_SEC - N_STEPS):
+            X_train_nuevos.append(datos_nuevos_escalados[i:i + LONG_SEC])
+            Y_train_nuevos.append(datos_nuevos_escalados[i + LONG_SEC:i + LONG_SEC + N_STEPS])  # Ajuste para N_STEPS
+
+        # Convertir a arrays de numpy
+        X_train_nuevos = np.array(X_train_nuevos)
+        Y_train_nuevos = np.array(Y_train_nuevos)
+
+        # Verificar la forma de Y_train_nuevos para asegurarse de que sea [batch_size, N_STEPS]
+        print(f"Forma de Y_train_nuevos: {Y_train_nuevos.shape}")  # Debe ser [batch_size, N_STEPS]
+
+        # Imprimir el tamaño de las secuencias antes del reshape
+        print(f"Forma de X_train_nuevos antes del reshape: {X_train_nuevos.shape}")
+
+        # Reestructurar para que tenga la forma adecuada para el modelo (batch_size, time_steps, features)
+        X_train_nuevos = np.reshape(X_train_nuevos, (X_train_nuevos.shape[0], X_train_nuevos.shape[1], 1))
+        print(f"Forma de X_train_nuevos después del reshape: {X_train_nuevos.shape}")
+    ################################################################################
+        # Cargar el modelo ya entrenado para su reentrenamiento
+        modelo = tf.keras.models.load_model(ruta + '5U1L64B.keras')
+
+        # Reentrenar el modelo con los nuevos datos
+        #EPOCHS = 20
+        #BATCH_SIZE = 64
+        #historial = modelo.fit(X_train_nuevos, Y_train_nuevos, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1)
+
+        # Predicción multistep para días futuros
+        # Usar el último segmento de datos escalados para predecir los días futuros
+        ultimo_X = datos_nuevos_escalados[-LONG_SEC:].reshape(1, LONG_SEC, 1)
+
+        predicciones_futuras = []
+        num_predicciones = Dias_futuros * 156  # 156 valores por día
+
+        for i in range(int(num_predicciones // N_STEPS)):
+            # Hacer la predicción usando el último punto disponible
+            pred_nueva = modelo.predict(ultimo_X)
+            predicciones_futuras.extend(pred_nueva[0])  # Agrega todos los pasos predichos
+
+            # Actualizar el último_X para incluir la nueva predicción
+            ultimo_X = np.roll(ultimo_X, -N_STEPS, axis=1)
+            ultimo_X[0, -N_STEPS:, 0] = pred_nueva[0].flatten()  # Aplanar el array antes de asignarlo
+
+        # Transformar las predicciones de vuelta a la escala original
+        predicciones_futuras = np.array(predicciones_futuras).reshape(-1, 1)
+        predicciones_futuras_inv = scaler_nuevos.inverse_transform(predicciones_futuras)
+        
+        # Obtener la fecha y hora actuales
+        fecha_actual = datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
+
+        # Sumar un día y establecer la hora a las 6:00
+        print('Esta es la fecha del dia sguiente: ')
+        #fecha_actual = (fecha_hora_actual + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
+        print(fecha_actual)
+
+        eje_x_pred = []
+        while len(eje_x_pred) < len(predicciones_futuras_inv):
+            if 6 <= fecha_actual.hour < 19:  # Solo horas de 6:00 a 19:00
+                eje_x_pred.append(fecha_actual)
+            fecha_actual += pd.Timedelta(minutes=5)
+
+        # Crear DataFrame para las predicciones
+        db_irr = pd.DataFrame({
+            'fecha': eje_x_pred,
+            'predicciones': predicciones_futuras_inv.flatten()
+        })
+        print(db_irr)
+    else:
+        print("No hay suficientes datos para generar secuencias de entrenamiento")
+    return render_template('informe_y_Estadistica/date_davis.html',prediction_g = prediction_g, db_irr=db_irr.to_dict(orient='records'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
