@@ -221,503 +221,495 @@
                         </div>
                     </div>                       
                     <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            // Obtener los datos de la tabla y convertirlos en un array de objetos
-                            var dates = [];
-                            document.querySelectorAll('#tabla tbody tr').forEach(function(row, index) {
-                                var timeElement = row.querySelector('.time');
-                                var demandElement = row.querySelector('.dat_demand');
+                        // Obtener los datos de la tabla y convertirlos en un array de objetos
+                        var dates = [];
+                        document.querySelectorAll('#tabla tbody tr').forEach(function(row, index) {
+                            var timeElement = row.querySelector('.time');
+                            var demandElement = row.querySelector('.dat_demand');
+                            
+                            if (timeElement && demandElement) {
+                                var timeText = timeElement.innerText;
+                                var demandText = demandElement.innerText;
                                 
-                                if (timeElement && demandElement) {
-                                    var timeText = timeElement.innerText;
-                                    var demandText = demandElement.innerText;
-                                    
-                                    var time = new Date(timeText).getTime();
-                                    var demand = parseFloat(demandText.replace(/,/g, '')); // Reemplazar comas si existen
-                                    
-                                    if (!isNaN(time) && !isNaN(demand)) {
-                                        dates.push({ x: time, y: demand });
-                                    } 
+                                var time = new Date(timeText).getTime();
+                                var demand = parseFloat(demandText.replace(/,/g, '')); // Reemplazar comas si existen
+                                
+                                if (!isNaN(time) && !isNaN(demand)) {
+                                    dates.push({ x: time, y: demand });
                                 } 
-                            });
-                    
-                            console.log(dates); // Verificar los datos extraídos
-                    
-                            // Configuración del gráfico
-                            var options = {
-                                series: [{
-                                    name: 'Demanda Energética',
-                                    data: dates
-                                }],
-                                chart: {
-                                    type: 'area',
-                                    height: 300,
-                                    zoom: {
-                                        type: 'x',
-                                        enabled: true,
-                                        autoScaleYaxis: true
-                                    },
-                                    toolbar: {                                
-                                        export: {
-                                            csv: {
-                                                filename: 'demanda_energetica',
-                                                columnDelimiter: ',',
-                                                headerCategory: 'Fecha y Hora',
-                                                headerValue: 'Demanda',
-                                                categoryFormatter(x) {
-                                                    // Formatear la fecha y hora para la exportación CSV
-                                                    return new Date(x).toLocaleString();
-                                                },
-                                                valueFormatter(y) {
-                                                    return y.toFixed(2); // Ajusta el formato del valor si es necesario
-                                                }
+                            } 
+                        });
+                
+                        console.log(dates); // Verificar los datos extraídos
+                
+                        // Configuración del gráfico
+                        var options = {
+                            series: [{
+                                name: 'Demanda Energética',
+                                data: dates
+                            }],
+                            chart: {
+                                type: 'area',
+                                height: 300,
+                                zoom: {
+                                    type: 'x',
+                                    enabled: true,
+                                    autoScaleYaxis: true
+                                },
+                                toolbar: {                                
+                                    export: {
+                                        csv: {
+                                            filename: 'demanda_energetica',
+                                            columnDelimiter: ',',
+                                            headerCategory: 'Fecha y Hora',
+                                            headerValue: 'Demanda',
+                                            categoryFormatter(x) {
+                                                // Formatear la fecha y hora para la exportación CSV
+                                                return new Date(x).toLocaleString();
+                                            },
+                                            valueFormatter(y) {
+                                                return y.toFixed(2); // Ajusta el formato del valor si es necesario
                                             }
-                                        },
-                                        autoSelected: 'zoom'
-                                    }
+                                        }
+                                    },
+                                    autoSelected: 'zoom'
+                                }
+                            },
+                            dataLabels: {
+                                enabled: false
+                            },
+                            markers: {
+                                size: 0,
+                            },
+                            title: {
+                                text: 'Movimiento de Demanda Energética',
+                                align: 'left'
+                            },
+                            fill: {
+                                type: 'gradient',
+                                gradient: {
+                                    shadeIntensity: 1,
+                                    inverseColors: false,
+                                    opacityFrom: 0.5,
+                                    opacityTo: 0,
+                                    stops: [0, 90, 100]
                                 },
-                                dataLabels: {
-                                    enabled: false
-                                },
-                                markers: {
-                                    size: 0,
+                            },
+                            stroke: {
+                                width: 1 // Define el grosor de la línea
+                            },
+                            yaxis: {
+                                labels: {
+                                    formatter: function (val) {
+                                        return val.toFixed(0); // Muestra los valores en el eje Y
+                                    },
                                 },
                                 title: {
-                                    text: 'Movimiento de Demanda Energética',
-                                    align: 'left'
+                                    text: 'Demanda Energética'
                                 },
-                                fill: {
-                                    type: 'gradient',
-                                    gradient: {
-                                        shadeIntensity: 1,
-                                        inverseColors: false,
-                                        opacityFrom: 0.5,
-                                        opacityTo: 0,
-                                        stops: [0, 90, 100]
-                                    },
-                                },
-                                stroke: {
-                                    width: 1 // Define el grosor de la línea
-                                },
-                                yaxis: {
-                                    labels: {
-                                        formatter: function (val) {
-                                            return val.toFixed(0); // Muestra los valores en el eje Y
-                                        },
-                                    },
-                                    title: {
-                                        text: 'Demanda Energética'
-                                    },
-                                },
-                                xaxis: {
-                                    type: 'datetime',
-                                    labels: {
-                                        formatter: function (value) {
-                                            var date = new Date(value);
-                                            return date.toLocaleDateString(); 
-                                        }
-                                    }
-                                },
-                                tooltip: {
-                                    shared: false,
-                                    y: {
-                                        formatter: function (val) {
-                                            return val.toFixed(0) ; // Muestra los valores en el tooltip
-                                        }
-                                    },
-                                    x: {
-                                        formatter: function (val) {
-                                            return new Date(val).toLocaleString(); // Muestra la fecha y hora en el tooltip
-                                        }
+                            },
+                            xaxis: {
+                                type: 'datetime',
+                                labels: {
+                                    formatter: function (value) {
+                                        var date = new Date(value);
+                                        return date.toLocaleDateString(); 
                                     }
                                 }
-                            };
-                    
-                            // Crear y renderizar el gráfico
-                            var chart = new ApexCharts(document.querySelector("#chart"), options);
-                            chart.render();
-                        });
+                            },
+                            tooltip: {
+                                shared: false,
+                                y: {
+                                    formatter: function (val) {
+                                        return val.toFixed(0) ; // Muestra los valores en el tooltip
+                                    }
+                                },
+                                x: {
+                                    formatter: function (val) {
+                                        return new Date(val).toLocaleString(); // Muestra la fecha y hora en el tooltip
+                                    }
+                                }
+                            }
+                        };
+                
+                        // Crear y renderizar el gráfico
+                        var chart = new ApexCharts(document.querySelector("#chart"), options);
+                        chart.render();
                     </script>
                     <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            // Obtener los datos de la tabla y convertirlos en arrays de objetos
-                            var dates = [];
-                            var excedenteData = [];
-                            var consumoData = [];
-                            var perdidaData = [];
+                         // Obtener los datos de la tabla y convertirlos en arrays de objetos
+                        var dates = [];
+                        var excedenteData = [];
+                        var consumoData = [];
+                        var perdidaData = [];
+                        
+                        document.querySelectorAll('#tabla tbody tr').forEach(function(row, index) {
+                            var timeElement = row.querySelector('.time');
+                            var excedenteElement = row.querySelector('.excedente');
+                            var consumoElement = row.querySelector('.consumo');
+                            var perdidaElement = row.querySelector('.perdida');
                             
-                            document.querySelectorAll('#tabla tbody tr').forEach(function(row, index) {
-                                var timeElement = row.querySelector('.time');
-                                var excedenteElement = row.querySelector('.excedente');
-                                var consumoElement = row.querySelector('.consumo');
-                                var perdidaElement = row.querySelector('.perdida');
+                            if (timeElement && excedenteElement && consumoElement && perdidaElement) {
+                                var timeText = timeElement.innerText;
+                                var time = new Date(timeText).getTime();
+                
+                                var excedente = parseFloat(excedenteElement.innerText.replace(/,/g, ''));
+                                var consumo = parseFloat(consumoElement.innerText.replace(/,/g, ''));
+                                var perdida = parseFloat(perdidaElement.innerText.replace(/,/g, ''));
                                 
-                                if (timeElement && excedenteElement && consumoElement && perdidaElement) {
-                                    var timeText = timeElement.innerText;
-                                    var time = new Date(timeText).getTime();
-                    
-                                    var excedente = parseFloat(excedenteElement.innerText.replace(/,/g, ''));
-                                    var consumo = parseFloat(consumoElement.innerText.replace(/,/g, ''));
-                                    var perdida = parseFloat(perdidaElement.innerText.replace(/,/g, ''));
-                                    
-                                    if (!isNaN(time) && !isNaN(excedente) && !isNaN(consumo) && !isNaN(perdida)) {
-                                        dates.push(time);
-                                        excedenteData.push({ x: time, y: excedente });
-                                        consumoData.push({ x: time, y: consumo });
-                                        perdidaData.push({ x: time, y: perdida });
-                                    } 
+                                if (!isNaN(time) && !isNaN(excedente) && !isNaN(consumo) && !isNaN(perdida)) {
+                                    dates.push(time);
+                                    excedenteData.push({ x: time, y: excedente });
+                                    consumoData.push({ x: time, y: consumo });
+                                    perdidaData.push({ x: time, y: perdida });
                                 } 
-                            });
-                    
-                            console.log(excedenteData); // Verificar los datos extraídos
-                            console.log(consumoData); // Verificar los datos extraídos
-                            console.log(perdidaData); // Verificar los datos extraídos
-                    
-                            // Configuración del gráfico
-                            var options = {
-                                series: [
-                                    {
-                                        name: 'Excedente',
-                                        data: excedenteData
-                                    },
-                                    {
-                                        name: 'Consumo',
-                                        data: consumoData
-                                    },
-                                    {
-                                        name: 'Energia Perdida',
-                                        data: perdidaData
-                                    }
-                                ],
-                                chart: {
-                                    type: 'line',
-                                    height: 300,
-                                    zoom: {
-                                        type: 'x',
-                                        enabled: true,
-                                        autoScaleYaxis: true
-                                    },
-                                    toolbar: {                                
-                                        export: {
-                                            csv: {
-                                                filename: 'analisis_demanda',
-                                                columnDelimiter: ',',
-                                                headerCategory: 'Fecha',
-                                                headerValue: 'Valor',
-                                                categoryFormatter(x) {
-                                                    // Formatear solo la fecha para la exportación CSV
-                                                    return new Date(x).toLocaleDateString();
-                                                }
+                            } 
+                        });
+                
+                        console.log(excedenteData); // Verificar los datos extraídos
+                        console.log(consumoData); // Verificar los datos extraídos
+                        console.log(perdidaData); // Verificar los datos extraídos
+                
+                        // Configuración del gráfico
+                        var options = {
+                            series: [
+                                {
+                                    name: 'Excedente',
+                                    data: excedenteData
+                                },
+                                {
+                                    name: 'Consumo',
+                                    data: consumoData
+                                },
+                                {
+                                    name: 'Energia Perdida',
+                                    data: perdidaData
+                                }
+                            ],
+                            chart: {
+                                type: 'line',
+                                height: 300,
+                                zoom: {
+                                    type: 'x',
+                                    enabled: true,
+                                    autoScaleYaxis: true
+                                },
+                                toolbar: {                                
+                                    export: {
+                                        csv: {
+                                            filename: 'analisis_demanda',
+                                            columnDelimiter: ',',
+                                            headerCategory: 'Fecha',
+                                            headerValue: 'Valor',
+                                            categoryFormatter(x) {
+                                                // Formatear solo la fecha para la exportación CSV
+                                                return new Date(x).toLocaleDateString();
                                             }
-                                        },
-                                        autoSelected: 'zoom'
-                                    }
+                                        }
+                                    },
+                                    autoSelected: 'zoom'
+                                }
+                            },
+                            dataLabels: {
+                                enabled: false
+                            },
+                            markers: {
+                                size: 0,
+                            },
+                            title: {
+                                text: 'Datos Energéticos',
+                                align: 'left'
+                            },
+                            fill: {
+                                type: 'solid',
+                                gradient: {
+                                    shadeIntensity: 1,
+                                    inverseColors: false,
+                                    opacityFrom: 0.5,
+                                    opacityTo: 0,
+                                    stops: [0, 90, 100]
                                 },
-                                dataLabels: {
-                                    enabled: false
-                                },
-                                markers: {
-                                    size: 0,
+                            },
+                            stroke: {
+                                width: 1 // Define el grosor de la línea
+                            },
+                            yaxis: {
+                                labels: {
+                                    formatter: function (val) {
+                                        return val.toFixed(0); // Muestra los valores en el eje Y
+                                    },
                                 },
                                 title: {
-                                    text: 'Datos Energéticos',
-                                    align: 'left'
+                                    text: 'Valores'
                                 },
-                                fill: {
-                                    type: 'solid',
-                                    gradient: {
-                                        shadeIntensity: 1,
-                                        inverseColors: false,
-                                        opacityFrom: 0.5,
-                                        opacityTo: 0,
-                                        stops: [0, 90, 100]
-                                    },
-                                },
-                                stroke: {
-                                    width: 1 // Define el grosor de la línea
-                                },
-                                yaxis: {
-                                    labels: {
-                                        formatter: function (val) {
-                                            return val.toFixed(0); // Muestra los valores en el eje Y
-                                        },
-                                    },
-                                    title: {
-                                        text: 'Valores'
-                                    },
-                                },
-                                xaxis: {
-                                    type: 'datetime'
-                                },
-                                tooltip: {
-                                    shared: false,
-                                    y: {
-                                        formatter: function (val) {
-                                            return val.toFixed(0) + ' unidades'; // Muestra los valores en el tooltip
-                                        }
+                            },
+                            xaxis: {
+                                type: 'datetime'
+                            },
+                            tooltip: {
+                                shared: false,
+                                y: {
+                                    formatter: function (val) {
+                                        return val.toFixed(0) + ' unidades'; // Muestra los valores en el tooltip
                                     }
                                 }
-                            };
-                    
-                            // Crear y renderizar el gráfico
-                            var chart = new ApexCharts(document.querySelector("#chart1"), options);
-                            chart.render();
-                        });
+                            }
+                        };
+                
+                        // Crear y renderizar el gráfico
+                        var chart = new ApexCharts(document.querySelector("#chart1"), options);
+                        chart.render();
                     </script>
                     <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            // Obtener los datos de la tabla y convertirlos en arrays de objetos
-                            var nombres = [];
-                            var consumoDiaWData = [];
-                            var consumoDiaKWData = [];
-                            var consumoMesKWData = [];
-                            var pagoData = [];
+                        // Obtener los datos de la tabla y convertirlos en arrays de objetos
+                        var nombres = [];
+                        var consumoDiaWData = [];
+                        var consumoDiaKWData = [];
+                        var consumoMesKWData = [];
+                        var pagoData = [];
+                        
+                        document.querySelectorAll('.table tbody tr').forEach(function(row, index) {
+                            var nombreElement = row.querySelector('.promedio_nombres');
+                            var consumoDiaWElement = row.querySelector('.promedio_dia_w');
+                            var consumoDiaKWElement = row.querySelector('.promedio_dia_kw');
+                            var consumoMesKWElement = row.querySelector('.promedio_mes_kw');
+                            var pagoElement = row.querySelector('.promedio_pago');
                             
-                            document.querySelectorAll('.table tbody tr').forEach(function(row, index) {
-                                var nombreElement = row.querySelector('.promedio_nombres');
-                                var consumoDiaWElement = row.querySelector('.promedio_dia_w');
-                                var consumoDiaKWElement = row.querySelector('.promedio_dia_kw');
-                                var consumoMesKWElement = row.querySelector('.promedio_mes_kw');
-                                var pagoElement = row.querySelector('.promedio_pago');
+                            if (nombreElement && consumoDiaWElement && consumoDiaKWElement && consumoMesKWElement && pagoElement) {
+                                var nombre = nombreElement.innerText;
+                                var consumoDiaW = parseFloat(consumoDiaWElement.innerText.replace(/,/g, ''));
+                                var consumoDiaKW = parseFloat(consumoDiaKWElement.innerText.replace(/,/g, ''));
+                                var consumoMesKW = parseFloat(consumoMesKWElement.innerText.replace(/,/g, ''));
+                                var pago = parseFloat(pagoElement.innerText.replace(/,/g, ''));
                                 
-                                if (nombreElement && consumoDiaWElement && consumoDiaKWElement && consumoMesKWElement && pagoElement) {
-                                    var nombre = nombreElement.innerText;
-                                    var consumoDiaW = parseFloat(consumoDiaWElement.innerText.replace(/,/g, ''));
-                                    var consumoDiaKW = parseFloat(consumoDiaKWElement.innerText.replace(/,/g, ''));
-                                    var consumoMesKW = parseFloat(consumoMesKWElement.innerText.replace(/,/g, ''));
-                                    var pago = parseFloat(pagoElement.innerText.replace(/,/g, ''));
-                                    
-                                    if (!isNaN(consumoDiaW) && !isNaN(consumoDiaKW) && !isNaN(consumoMesKW) && !isNaN(pago)) {
-                                        nombres.push(nombre);
-                                        consumoDiaWData.push(consumoDiaW);
-                                        consumoDiaKWData.push(consumoDiaKW);
-                                        consumoMesKWData.push(consumoMesKW);
-                                        pagoData.push(pago);
-                                    }
+                                if (!isNaN(consumoDiaW) && !isNaN(consumoDiaKW) && !isNaN(consumoMesKW) && !isNaN(pago)) {
+                                    nombres.push(nombre);
+                                    consumoDiaWData.push(consumoDiaW);
+                                    consumoDiaKWData.push(consumoDiaKW);
+                                    consumoMesKWData.push(consumoMesKW);
+                                    pagoData.push(pago);
                                 }
-                            });
-                    
-                            console.log(consumoDiaWData); // Verificar los datos extraídos
-                            console.log(consumoDiaKWData); // Verificar los datos extraídos
-                            console.log(consumoMesKWData); // Verificar los datos extraídos
-                            console.log(pagoData); // Verificar los datos extraídos
-                    
-                            // Configuración del gráfico
-                            var options = {
-                                series: [
-                                    {
-                                        name: 'Consumo (W)/día',
-                                        data: consumoDiaWData
-                                    },
-                                    {
-                                        name: 'Consumo (KW)/día',
-                                        data: consumoDiaKWData
-                                    },
-                                    {
-                                        name: 'Consumo (KW)/mes',
-                                        data: consumoMesKWData
-                                    },
-                                    {
-                                        name: 'Pago ($)',
-                                        data: pagoData
-                                    }
-                                ],
-                                chart: {
-                                    type: 'bar',
-                                    height: 300,
-                                    stacked: true,
-                                    toolbar: {
-                                        show: true,
-                                        export:{
-                                            csv: {
-                                                filename: 'Promedio',
-                                            }
-                                        }
-                                    },
-                                    zoom: {
-                                        enabled: true
-                                    }
-                                },
-                                plotOptions: {
-                                    bar: {
-                                        horizontal: false,
-                                        dataLabels: {
-                                            position: 'top'
-                                        }
-                                    }
-                                },
-                                dataLabels: {
-                                    enabled: true,
-                                    offsetX: -6,
-                                    style: {
-                                        fontSize: '12px',
-                                        colors: ['#304758']
-                                    }
-                                },
-                                stroke: {
-                                    show: true,
-                                    width: 1,
-                                    colors: ['#fff']
-                                },
-                                xaxis: {
-                                    categories: nombres,
-                                },
-                                yaxis: {
-                                    labels: {
-                                        formatter: function (val) {
-                                            return val.toFixed(0); // Muestra los valores en el eje Y
-                                        },
-                                    },
-                                    title: {
-                                        text: 'Valores'
-                                    },
-                                },
-                                tooltip: {
-                                    shared: true,
-                                    intersect: false,
-                                    y: {
-                                        formatter: function (val) {
-                                            return val.toFixed(2) + ' unidades'; // Muestra los valores en el tooltip
-                                        }
-                                    }
-                                },
-                                fill: {
-                                    opacity: 1
-                                },
-                                legend: {
-                                    position: 'top',
-                                    horizontalAlign: 'left',
-                                    offsetX: 40
-                                }
-                            };
-                    
-                            // Crear y renderizar el gráfico
-                            var chart = new ApexCharts(document.querySelector("#chart2"), options);
-                            chart.render();
+                            }
                         });
+                
+                        console.log(consumoDiaWData); // Verificar los datos extraídos
+                        console.log(consumoDiaKWData); // Verificar los datos extraídos
+                        console.log(consumoMesKWData); // Verificar los datos extraídos
+                        console.log(pagoData); // Verificar los datos extraídos
+                
+                        // Configuración del gráfico
+                        var options = {
+                            series: [
+                                {
+                                    name: 'Consumo (W)/día',
+                                    data: consumoDiaWData
+                                },
+                                {
+                                    name: 'Consumo (KW)/día',
+                                    data: consumoDiaKWData
+                                },
+                                {
+                                    name: 'Consumo (KW)/mes',
+                                    data: consumoMesKWData
+                                },
+                                {
+                                    name: 'Pago ($)',
+                                    data: pagoData
+                                }
+                            ],
+                            chart: {
+                                type: 'bar',
+                                height: 300,
+                                stacked: true,
+                                toolbar: {
+                                    show: true,
+                                    export:{
+                                        csv: {
+                                            filename: 'Promedio',
+                                        }
+                                    }
+                                },
+                                zoom: {
+                                    enabled: true
+                                }
+                            },
+                            plotOptions: {
+                                bar: {
+                                    horizontal: false,
+                                    dataLabels: {
+                                        position: 'top'
+                                    }
+                                }
+                            },
+                            dataLabels: {
+                                enabled: true,
+                                offsetX: -6,
+                                style: {
+                                    fontSize: '12px',
+                                    colors: ['#304758']
+                                }
+                            },
+                            stroke: {
+                                show: true,
+                                width: 1,
+                                colors: ['#fff']
+                            },
+                            xaxis: {
+                                categories: nombres,
+                            },
+                            yaxis: {
+                                labels: {
+                                    formatter: function (val) {
+                                        return val.toFixed(0); // Muestra los valores en el eje Y
+                                    },
+                                },
+                                title: {
+                                    text: 'Valores'
+                                },
+                            },
+                            tooltip: {
+                                shared: true,
+                                intersect: false,
+                                y: {
+                                    formatter: function (val) {
+                                        return val.toFixed(2) + ' unidades'; // Muestra los valores en el tooltip
+                                    }
+                                }
+                            },
+                            fill: {
+                                opacity: 1
+                            },
+                            legend: {
+                                position: 'top',
+                                horizontalAlign: 'left',
+                                offsetX: 40
+                            }
+                        };
+                
+                        // Crear y renderizar el gráfico
+                        var chart = new ApexCharts(document.querySelector("#chart2"), options);
+                        chart.render();
                     </script>
                     <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            // Obtener los datos de la tabla y convertirlos en arrays de objetos
-                            var nombres = [];
-                            var consumoDiaWData = [];
-                            var consumoMesKWData = [];
-                            var pagoData = [];
+                        // Obtener los datos de la tabla y convertirlos en arrays de objetos
+                        var nombres = [];
+                        var consumoDiaWData = [];
+                        var consumoMesKWData = [];
+                        var pagoData = [];
+                        
+                        document.querySelectorAll('.table tbody tr').forEach(function(row, index) {
+                            var nombreElement = row.querySelector('.nombres');
+                            var consumoDiaWElement = row.querySelector('.consumo_dia_w');
+                            var consumoMesKWElement = row.querySelector('.consumo_mes_kw');
+                            var pagoElement = row.querySelector('.pago');
                             
-                            document.querySelectorAll('.table tbody tr').forEach(function(row, index) {
-                                var nombreElement = row.querySelector('.nombres');
-                                var consumoDiaWElement = row.querySelector('.consumo_dia_w');
-                                var consumoMesKWElement = row.querySelector('.consumo_mes_kw');
-                                var pagoElement = row.querySelector('.pago');
+                            if (nombreElement && consumoDiaWElement && consumoMesKWElement && pagoElement) {
+                                var nombre = nombreElement.innerText;
+                                var consumoDiaW = parseFloat(consumoDiaWElement.innerText.replace(/,/g, ''));
+                                var consumoMesKW = parseFloat(consumoMesKWElement.innerText.replace(/,/g, ''));
+                                var pago = parseFloat(pagoElement.innerText.replace(/,/g, ''));
                                 
-                                if (nombreElement && consumoDiaWElement && consumoMesKWElement && pagoElement) {
-                                    var nombre = nombreElement.innerText;
-                                    var consumoDiaW = parseFloat(consumoDiaWElement.innerText.replace(/,/g, ''));
-                                    var consumoMesKW = parseFloat(consumoMesKWElement.innerText.replace(/,/g, ''));
-                                    var pago = parseFloat(pagoElement.innerText.replace(/,/g, ''));
-                                    
-                                    if (!isNaN(consumoDiaW) && !isNaN(consumoMesKW) && !isNaN(pago)) {
-                                        nombres.push(nombre);
-                                        consumoDiaWData.push(consumoDiaW);
-                                        consumoMesKWData.push(consumoMesKW);
-                                        pagoData.push(pago);
-                                    }
+                                if (!isNaN(consumoDiaW) && !isNaN(consumoMesKW) && !isNaN(pago)) {
+                                    nombres.push(nombre);
+                                    consumoDiaWData.push(consumoDiaW);
+                                    consumoMesKWData.push(consumoMesKW);
+                                    pagoData.push(pago);
                                 }
-                            });
-                    
-                            console.log(consumoDiaWData); // Verificar los datos extraídos
-                            console.log(consumoMesKWData); // Verificar los datos extraídos
-                            console.log(pagoData); // Verificar los datos extraídos
-                    
-                            // Configuración del gráfico
-                            var options = {
-                                series: [
-                                    {
-                                        name: 'Consumo (W)/día',
-                                        data: consumoDiaWData
-                                    },
-                                    {
-                                        name: 'Consumo (KW)/mes',
-                                        data: consumoMesKWData
-                                    },
-                                    {
-                                        name: 'Pago ($)',
-                                        data: pagoData
-                                    }
-                                ],
-                                chart: {
-                                    type: 'bar',
-                                    height: 300,
-                                    stacked: true,
-                                    toolbar: {
-                                        show: true,
-                                        export:{
-                                            csv: {
-                                                filename: 'Consumo Neto',
-                                            }
-                                        }
-                                    },
-                                    zoom: {
-                                        enabled: true
-                                    }
-                                },
-                                plotOptions: {
-                                    bar: {
-                                        horizontal: false,
-                                        dataLabels: {
-                                            position: 'top'
-                                        }
-                                    }
-                                },
-                                dataLabels: {
-                                    enabled: true,
-                                    offsetX: -6,
-                                    style: {
-                                        fontSize: '12px',
-                                        colors: ['#304758']
-                                    }
-                                },
-                                stroke: {
-                                    show: true,
-                                    width: 1,
-                                    colors: ['#fff']
-                                },
-                                xaxis: {
-                                    categories: nombres,
-                                },
-                                yaxis: {
-                                    labels: {
-                                        formatter: function (val) {
-                                            return val.toFixed(0); // Muestra los valores en el eje Y
-                                        },
-                                    },
-                                    title: {
-                                        text: 'Valores'
-                                    },
-                                },
-                                tooltip: {
-                                    shared: true,
-                                    intersect: false,
-                                    y: {
-                                        formatter: function (val) {
-                                            return val.toFixed(2) + ' unidades'; // Muestra los valores en el tooltip
-                                        }
-                                    }
-                                },
-                                fill: {
-                                    opacity: 1
-                                },
-                                legend: {
-                                    position: 'top',
-                                    horizontalAlign: 'left',
-                                    offsetX: 40
-                                }
-                            };
-                    
-                            // Crear y renderizar el gráfico
-                            var chart = new ApexCharts(document.querySelector("#chart3"), options);
-                            chart.render();
+                            }
                         });
+                
+                        console.log(consumoDiaWData); // Verificar los datos extraídos
+                        console.log(consumoMesKWData); // Verificar los datos extraídos
+                        console.log(pagoData); // Verificar los datos extraídos
+                
+                        // Configuración del gráfico
+                        var options = {
+                            series: [
+                                {
+                                    name: 'Consumo (W)/día',
+                                    data: consumoDiaWData
+                                },
+                                {
+                                    name: 'Consumo (KW)/mes',
+                                    data: consumoMesKWData
+                                },
+                                {
+                                    name: 'Pago ($)',
+                                    data: pagoData
+                                }
+                            ],
+                            chart: {
+                                type: 'bar',
+                                height: 300,
+                                stacked: true,
+                                toolbar: {
+                                    show: true,
+                                    export:{
+                                        csv: {
+                                            filename: 'Consumo Neto',
+                                        }
+                                    }
+                                },
+                                zoom: {
+                                    enabled: true
+                                }
+                            },
+                            plotOptions: {
+                                bar: {
+                                    horizontal: false,
+                                    dataLabels: {
+                                        position: 'top'
+                                    }
+                                }
+                            },
+                            dataLabels: {
+                                enabled: true,
+                                offsetX: -6,
+                                style: {
+                                    fontSize: '12px',
+                                    colors: ['#304758']
+                                }
+                            },
+                            stroke: {
+                                show: true,
+                                width: 1,
+                                colors: ['#fff']
+                            },
+                            xaxis: {
+                                categories: nombres,
+                            },
+                            yaxis: {
+                                labels: {
+                                    formatter: function (val) {
+                                        return val.toFixed(0); // Muestra los valores en el eje Y
+                                    },
+                                },
+                                title: {
+                                    text: 'Valores'
+                                },
+                            },
+                            tooltip: {
+                                shared: true,
+                                intersect: false,
+                                y: {
+                                    formatter: function (val) {
+                                        return val.toFixed(2) + ' unidades'; // Muestra los valores en el tooltip
+                                    }
+                                }
+                            },
+                            fill: {
+                                opacity: 1
+                            },
+                            legend: {
+                                position: 'top',
+                                horizontalAlign: 'left',
+                                offsetX: 40
+                            }
+                        };
+                
+                        // Crear y renderizar el gráfico
+                        var chart = new ApexCharts(document.querySelector("#chart3"), options);
+                        chart.render();
                     </script>
                 </div>
             </main> 

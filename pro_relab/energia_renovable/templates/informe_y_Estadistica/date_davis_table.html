@@ -90,139 +90,137 @@
     <div id="myChart" ></div>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Obtener los datos de la tabla y convertirlos en arrays de objetos
-        var dates = [];
-        var radiancionData = [];
-        var radiacionAltaData = [];
+    // Obtener los datos de la tabla y convertirlos en arrays de objetos
+    var dates = [];
+    var radiancionData = [];
+    var radiacionAltaData = [];
+    
+    document.querySelectorAll('#tablaG tbody tr').forEach(function(row, index) {
+        var timeElement = row.querySelector('.time_irradiance');
+        var radiancionElement = row.querySelector('.avg_irradiance');
+        var radiacionAltaElement = row.querySelector('.highest_irradiance');
         
-        document.querySelectorAll('#tablaG tbody tr').forEach(function(row, index) {
-            var timeElement = row.querySelector('.time_irradiance');
-            var radiancionElement = row.querySelector('.avg_irradiance');
-            var radiacionAltaElement = row.querySelector('.highest_irradiance');
+        if (timeElement && radiancionElement && radiacionAltaElement ) {
+            var timeText = timeElement.innerText;
+            var time = new Date(timeText).getTime();
+
+            var radiancion = parseFloat(radiancionElement.innerText.replace(/,/g, ''));
+            var radiacionAlta = parseFloat(radiacionAltaElement.innerText.replace(/,/g, ''));
             
-            if (timeElement && radiancionElement && radiacionAltaElement ) {
-                var timeText = timeElement.innerText;
-                var time = new Date(timeText).getTime();
-
-                var radiancion = parseFloat(radiancionElement.innerText.replace(/,/g, ''));
-                var radiacionAlta = parseFloat(radiacionAltaElement.innerText.replace(/,/g, ''));
-                
-                if (!isNaN(time) && !isNaN(radiancion) && !isNaN(radiacionAlta) ) {
-                    dates.push(time);
-                    radiancionData.push({ x: time, y: radiancion });
-                    radiacionAltaData.push({ x: time, y: radiacionAlta });
-                } 
+            if (!isNaN(time) && !isNaN(radiancion) && !isNaN(radiacionAlta) ) {
+                dates.push(time);
+                radiancionData.push({ x: time, y: radiancion });
+                radiacionAltaData.push({ x: time, y: radiacionAlta });
             } 
-        });
+        } 
+    });
 
-        console.log(radiancionData); // Verificar los datos extraídos
-        console.log(radiacionAltaData); // Verificar los datos extraídos
+    console.log(radiancionData); // Verificar los datos extraídos
+    console.log(radiacionAltaData); // Verificar los datos extraídos
 
-        // Configuración del gráfico
-        var options = {
-            series: [
-                {
-                    name: 'Radiacion',
-                    data: radiancionData
-                },
-                {
-                    name: 'Radiacion Alta',
-                    data: radiacionAltaData
-                }
-            ],
-            chart: {
-                type: 'line',
-                height: 300,
-                zoom: {
-                    type: 'x',
-                    enabled: true,
-                    autoScaleYaxis: true
-                },
-                toolbar: {
-                    autoSelected: 'zoom',
-                    export: {
-                        csv: {
-                            filename: 'datos_irradiancia',
-                            columnDelimiter: ',',
-                            headerCategory: 'Fecha y Hora',
-                            headerValue: 'Valor',
-                            categoryFormatter(x) {
-                                // Formatear la fecha y hora para la exportación CSV
-                                return new Date(x).toLocaleDateString() + ' ' + new Date(x).toLocaleTimeString();
-                            },
-                            valueFormatter(y) {
-                                return y.toFixed(2); // Ajusta el formato del valor si es necesario
-                            }
+    // Configuración del gráfico
+    var options = {
+        series: [
+            {
+                name: 'Radiacion',
+                data: radiancionData
+            },
+            {
+                name: 'Radiacion Alta',
+                data: radiacionAltaData
+            }
+        ],
+        chart: {
+            type: 'line',
+            height: 300,
+            zoom: {
+                type: 'x',
+                enabled: true,
+                autoScaleYaxis: true
+            },
+            toolbar: {
+                autoSelected: 'zoom',
+                export: {
+                    csv: {
+                        filename: 'datos_irradiancia',
+                        columnDelimiter: ',',
+                        headerCategory: 'Fecha y Hora',
+                        headerValue: 'Valor',
+                        categoryFormatter(x) {
+                            // Formatear la fecha y hora para la exportación CSV
+                            return new Date(x).toLocaleDateString() + ' ' + new Date(x).toLocaleTimeString();
                         },
-                        svg: {
-                            filename: undefined,
-                        },
-                        png: {
-                            filename: undefined,
+                        valueFormatter(y) {
+                            return y.toFixed(2); // Ajusta el formato del valor si es necesario
                         }
                     },
-                }
+                    svg: {
+                        filename: undefined,
+                    },
+                    png: {
+                        filename: undefined,
+                    }
+                },
+            }
+        },
+        dataLabels: {
+            enabled: false
+        },
+        markers: {
+            size: 0,
+        },
+        title: {
+            text: 'Datos Irradiancia',
+            align: 'left'
+        },
+        fill: {
+            type: 'solid',
+            gradient: {
+                shadeIntensity: 1,
+                inverseColors: false,
+                opacityFrom: 0.5,
+                opacityTo: 0,
+                stops: [0, 90, 100]
             },
-            dataLabels: {
-                enabled: false
-            },
-            markers: {
-                size: 0,
+        },
+        stroke: {
+            width: 1 // Define el grosor de la línea
+        },
+        yaxis: {
+            labels: {
+                formatter: function (val) {
+                    return val.toFixed(0); // Muestra los valores en el eje Y
+                },
             },
             title: {
-                text: 'Datos Irradiancia',
-                align: 'left'
+                text: 'G'
             },
-            fill: {
-                type: 'solid',
-                gradient: {
-                    shadeIntensity: 1,
-                    inverseColors: false,
-                    opacityFrom: 0.5,
-                    opacityTo: 0,
-                    stops: [0, 90, 100]
-                },
-            },
-            stroke: {
-                width: 1 // Define el grosor de la línea
-            },
-            yaxis: {
-                labels: {
-                    formatter: function (val) {
-                        return val.toFixed(0); // Muestra los valores en el eje Y
-                    },
-                },
-                title: {
-                    text: 'G'
-                },
-            },
-            xaxis: {
-                type: 'datetime',
-                labels: {
-                    formatter: function (value) {
-                        var date = new Date(value);
-                        return date.toLocaleDateString(); 
-                    }
-                }
-            },
-            tooltip: {
-                shared: false,
-                y: {
-                    formatter: function (val) {
-                        return val.toFixed(0) + ' W/m²'; // Muestra los valores en el tooltip
-                    }
-                },
-                x: {
-                    formatter: function (val) {
-                        return new Date(val).toLocaleString(); // Muestra la fecha y hora en el tooltip
-                    }
+        },
+        xaxis: {
+            type: 'datetime',
+            labels: {
+                formatter: function (value) {
+                    var date = new Date(value);
+                    return date.toLocaleDateString(); 
                 }
             }
-        };
+        },
+        tooltip: {
+            shared: false,
+            y: {
+                formatter: function (val) {
+                    return val.toFixed(0) + ' W/m²'; // Muestra los valores en el tooltip
+                }
+            },
+            x: {
+                formatter: function (val) {
+                    return new Date(val).toLocaleString(); // Muestra la fecha y hora en el tooltip
+                }
+            }
+        }
+    };
 
-        // Crear y renderizar el gráfico
-        var chart = new ApexCharts(document.querySelector("#myChart"), options);
-        chart.render();
-    });
+    // Crear y renderizar el gráfico
+    var chart = new ApexCharts(document.querySelector("#myChart"), options);
+    chart.render();
 </script> 
