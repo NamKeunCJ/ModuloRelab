@@ -36,7 +36,10 @@
                      
                     <label for="end_date" class="form-label" style="margin-bottom: 1rem;"><b>GENERAR PREDICCION</b></label>
                     <form id="prediction-form" action="/irradiance_prediction" method="get">
-                        <button type="submit" class="btn btn-primary" id="generate-button">
+                        <button type="submit" class="tooltip_btn btn btn-primary mt-2" 
+                        data-bs-toggle="tooltip" data-bs-placement="top"
+                        data-bs-custom-class="custom-tooltip"
+                        data-bs-title="Generar predicción de datos de irradiancia." id="generate-button">
                             Generar
                         </button>
                     </form>

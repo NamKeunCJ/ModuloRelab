@@ -270,42 +270,43 @@ def update_user():
             else:
                 return redirect(url_for('inicio_principal'))  # Si el usuario no es Administrador, redirige a la página principal
 
-#Conexion de la estacion meteorologica con el sistema de informacion
+# Conexión de la estación meteorológica con el sistema de información
 def davis():
+    # Inicia una función llamada `davis` que se ejecutará indefinidamente.
     while True:
         print("Dato recibido")
+        
+        # Llaves de la API (se usan para autenticar y acceder a los datos).
         API_KEY = "jxhpskyfalmhlegx9mwqnwplcpmoltc0"
         STATION_ID = "181874"
         headers = {"X-Api-Secret": "sxchcxmtchcydblvcgbknst9mumap1cq"}
 
+        # Obtiene el timestamp actual y define el rango de tiempo de 30 días hacia atrás.
         end_timestamp = int(time.time())
         start_timestamp = end_timestamp - (30 * 24 * 3600)
+
+        # Duración máxima permitida para cada consulta (86400 segundos = 1 día).
         max_duration_seconds = 86400
 
+        # Bucle para procesar datos en bloques de tiempo.
         while end_timestamp > start_timestamp:
             current_start = max(end_timestamp - max_duration_seconds, start_timestamp)
             url = f"https://api.weatherlink.com/v2/historic/{STATION_ID}?api-key={API_KEY}&start-timestamp={current_start}&end-timestamp={end_timestamp}"
             
             try:
                 response = requests.get(url, headers=headers)
+
                 if response.status_code == 200:
                     data = response.json().get('sensors', [])
                     db_data = []
 
                     for sensor in data:
-                        last_timestamp = None
                         for inner_data in sensor.get('data', []):
                             ts = inner_data.get('ts')
-                            if last_timestamp:
-                                for i in range((ts - last_timestamp) // 300 - 1):
-                                    missing_ts = last_timestamp + (i + 1) * 300
-                                    previous_year_data = get_previous_year_data(missing_ts)
-                                    db_data.append((previous_year_data or (None, None), datetime.fromtimestamp(missing_ts).strftime('%Y-%m-%d %H:%M:%S')))
-                            
                             avg, hi = inner_data.get('solar_rad_avg'), inner_data.get('solar_rad_hi')
                             db_data.append(((avg, hi), datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')))
-                            last_timestamp = ts
 
+                    # Guardar los datos en la base de datos
                     with get_db_connection() as conn:
                         with conn.cursor() as cursor:
                             cursor.executemany("""
@@ -314,6 +315,9 @@ def davis():
                                 ON CONFLICT (created_at) DO NOTHING
                             """, [(prom, max_, created_at) for (prom, max_), created_at in db_data])
 
+                    print("Datos guardados en la base de datos.")
+                    # Revisar y completar datos faltantes en los últimos 30 días
+                    revisar_completar_datos_faltantes()
                 elif response.status_code == 400:
                     print("Error 400: Solicitud incorrecta", response.json())
 
@@ -321,9 +325,65 @@ def davis():
                 print(f"Error en la API: {e}")
 
             end_timestamp = current_start - 1
-
         time.sleep(300)
 
+# Función para revisar y completar datos faltantes en los últimos 30 días
+def revisar_completar_datos_faltantes():
+    # Definir el rango de 30 días
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+
+    # Recuperar todos los datos de los últimos 30 días desde la base de datos
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT prom_irr, max_irr, created_at
+                FROM dato_irradiancia
+                WHERE created_at >= %s AND created_at <= %s
+                ORDER BY created_at ASC
+            """, (start_date.strftime('%Y-%m-%d %H:%M:%S'), end_date.strftime('%Y-%m-%d %H:%M:%S')))
+            records = cursor.fetchall()
+
+    # Verificar intervalos de tiempo faltantes en los datos obtenidos
+    interpolated_data = []
+    last_timestamp = None
+
+    for row in records:
+        prom_irr, max_irr, created_at = row
+        ts = int(created_at.timestamp())  # Utilizar directamente `created_at.timestamp()` en lugar de `strptime`
+
+        if last_timestamp and ts - last_timestamp > 300:
+            # Interpolación para intervalos de 5 minutos faltantes
+            missing_intervals = (ts - last_timestamp) // 300
+            for i in range(1, missing_intervals):
+                missing_ts = last_timestamp + i * 300
+                previous_year_data = get_previous_year_data(missing_ts)
+
+                if previous_year_data and previous_year_data[0] is not None:
+                    interpolated_entry = (previous_year_data[0], previous_year_data[1], datetime.fromtimestamp(missing_ts).strftime('%Y-%m-%d %H:%M:%S'))
+                    print("Dato interpolado IF:", interpolated_entry)
+                else:
+                    interpolated_entry = (0, 0, datetime.fromtimestamp(missing_ts).strftime('%Y-%m-%d %H:%M:%S'))
+
+                    print("Dato interpolado ELSE :", interpolated_entry)
+                interpolated_data.append(interpolated_entry)
+
+        last_timestamp = ts
+
+    # Insertar los datos interpolados en la base de datos
+    if interpolated_data:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.executemany("""
+                    INSERT INTO dato_irradiancia (prom_irr, max_irr, created_at)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (created_at) DO NOTHING
+                """, interpolated_data)
+        print("Datos interpolados añadidos a la base de datos.")
+    else:
+        print("No se encontraron datos faltantes para interpolar.")
+
+# Función para obtener datos del año anterior para un timestamp específico
 def get_previous_year_data(ts):
     query = "SELECT prom_irr, max_irr FROM dato_irradiancia WHERE created_at = %s"
     one_year_ago = (datetime.fromtimestamp(ts) - timedelta(days=365)).strftime('%Y-%m-%d %H:%M:%S')
@@ -331,7 +391,8 @@ def get_previous_year_data(ts):
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(query, (one_year_ago,))
-            return cursor.fetchone()
+            result = cursor.fetchone()
+            return result if result else (None, None)
         
 # Crear un hilo para la función davis
 data_fetch_thread = threading.Thread(target=davis)
@@ -351,6 +412,10 @@ def irradiance_display():
     if request.method == 'POST':
         start_date = request.form.get('start_date')
         end_date = request.form.get('end_date')
+        # Asegúrate de que las fechas no están vacías antes de añadir la hora
+        start_date = f"{start_date} 06:00:00"  # Agrega hora 06:00:00 a la fecha de inicio
+        end_date = f"{end_date} 19:00:00"      # Agrega hora 19:00:00 a la fecha final
+
         # Redirige a la misma ruta con parámetros en la URL para evitar el reenvío del formulario
         return redirect(url_for('irradiance_display', start_date=start_date, end_date=end_date))
 
@@ -358,7 +423,7 @@ def irradiance_display():
     with get_db_connection() as conn:
         with conn.cursor() as cur:
             if start_date and end_date:
-                cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia WHERE (created_at >= %s and created_at <= %s) and prom_irr!=0 ORDER BY created_at desc;', (start_date, end_date))
+                cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia WHERE (created_at >= %s and created_at <= %s) ORDER BY created_at desc;', (start_date, end_date))
             else:
                 cur.execute('SELECT prom_irr, max_irr, created_at FROM dato_irradiancia ORDER BY created_at desc LIMIT 144;')
             db_irr = cur.fetchall()

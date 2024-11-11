@@ -88,20 +88,9 @@ $(document).ready(function() {
 //TOOLTIP
 
 document.addEventListener('DOMContentLoaded', function() {
-    const exampleEl = document.getElementById('busar_G');
-    const tooltip = new bootstrap.Tooltip(exampleEl);
-}); 
-
-document.addEventListener('DOMContentLoaded', function() {
-    const exampleEl = document.getElementById('file-button');
-    const tooltip = new bootstrap.Tooltip(exampleEl);
-}); 
-
-document.addEventListener('DOMContentLoaded', function() {
-    const exampleEl = document.getElementById('agregar-costo');
-    const tooltip = new bootstrap.Tooltip(exampleEl);
-}); 
-document.addEventListener('DOMContentLoaded', function() {
-    const exampleEl = document.getElementById('datos_actuales');
-    const tooltip = new bootstrap.Tooltip(exampleEl);
-}); 
+    const tooltipElements = document.querySelectorAll('.tooltip_btn'); // Selecciona todos los elementos con la clase 'tooltip'
+    
+    tooltipElements.forEach(function(element) {
+        new bootstrap.Tooltip(element); // Aplica Bootstrap Tooltip a cada elemento
+    });
+});
