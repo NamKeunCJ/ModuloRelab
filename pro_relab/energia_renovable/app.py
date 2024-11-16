@@ -314,10 +314,9 @@ def davis():
                                 VALUES (%s, %s, %s)
                                 ON CONFLICT (created_at) DO NOTHING
                             """, [(prom, max_, created_at) for (prom, max_), created_at in db_data])
-
-                    print("Datos guardados en la base de datos.")
-                    # Revisar y completar datos faltantes en los últimos 30 días
-                    revisar_completar_datos_faltantes()
+                            conn.commit()
+                    
+                    
                 elif response.status_code == 400:
                     print("Error 400: Solicitud incorrecta", response.json())
 
@@ -325,6 +324,9 @@ def davis():
                 print(f"Error en la API: {e}")
 
             end_timestamp = current_start - 1
+        print("Datos guardados en la base de datos.")
+        # Revisar y completar datos faltantes en los últimos 30 días
+        revisar_completar_datos_faltantes()
         time.sleep(300)
 
 # Función para revisar y completar datos faltantes en los últimos 30 días

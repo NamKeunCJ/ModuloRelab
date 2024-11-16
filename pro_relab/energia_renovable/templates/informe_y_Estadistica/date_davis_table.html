@@ -88,6 +88,7 @@
 </div>
 <div class="card shadow-lg card-flush h-md-50 mb-5 mb-xl-10" style="padding: 1rem;" >
     <div id="myChart" ></div>
+    <button id="exportCSVG" class="btn btn-secondary mt-3" style="opacity: 0.5;">Exportar a CSV</button>
 </div>
 <script>
     // Obtener los datos de la tabla y convertirlos en arrays de objetos
@@ -223,4 +224,34 @@
     // Crear y renderizar el gráfico
     var chart = new ApexCharts(document.querySelector("#myChart"), options);
     chart.render();
+
+    document.getElementById("exportCSVG").addEventListener("click", function () {
+        // Variable para almacenar el contenido del CSV
+        let csvContent = "data:text/csv;charset=utf-8,";
+
+        // Encabezados del CSV
+        csvContent += "Fecha y Hora,Radiacion,Radiacion Alta\n";
+
+        // Exportar los datos de las series de la gráfica (radiancionData y radiacionAltaData)
+        radiancionData.forEach(function (item, index) {
+            // Usamos los mismos valores de la serie del gráfico
+            const time = new Date(item.x).toLocaleString();  // Formatear la fecha
+            const radiacion = item.y.toFixed(2);  // Ajuste de los valores numéricos
+            const radiacionAlta = radiacionAltaData[index] ? radiacionAltaData[index].y.toFixed(2) : '';  // Aseguramos que haya datos para 'Radiación Alta'
+
+            // Añadir la fila al CSV
+            csvContent += `${time},${radiacion},${radiacionAlta}\n`;
+        });
+
+        // Crear un enlace para descargar el CSV
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "datos_irradiancia_completos.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+
 </script> 
