@@ -604,6 +604,9 @@ def demand_display():
 #PREDICCION DE IRRADIANCIA
 @app.route('/irradiance_prediction')
 def irradiance_prediction():
+    user_id = session.get('user_id')
+    if user_id is None:
+        return redirect(url_for('inicio_sesion'))
     prediction_g = 1
     # Ruta donde se encuentra el modelo
     ruta = 'C:/PROYECTO/Relab/pro_relab/energia_renovable/modelo/'
