@@ -628,8 +628,6 @@ def irradiance_prediction():
             """)
             db = cur.fetchall()
 
-    
-
     # Convertir los resultados a un DataFrame de pandas
     df = pd.DataFrame(db, columns=["prom_irr", "created_at"])
 
@@ -646,9 +644,9 @@ def irradiance_prediction():
 
     # Definir las secuencias para entrenamiento y predicción basados en el tamaño de las secuencias de entrada
     Dias_pasados = 7  # N
-    LONG_SEC = 156 * Dias_pasados  # Tamaño de entrada
+    LONG_SEC = 157 * Dias_pasados  # Tamaño de entrada
     Dias_futuros = 1  # Número de días a predecir
-    N_STEPS = 156  # Tamaño de salida (para 1 día, 156 valores)
+    N_STEPS = 157  # Tamaño de salida (para 1 día, 156 valores)
 
     print(f"Tamaño de los datos escalados nuevos: {len(datos_nuevos_escalados)}")
 
@@ -674,11 +672,11 @@ def irradiance_prediction():
         print(f"Forma de X_train_nuevos después del reshape: {X_train_nuevos.shape}")
     ################################################################################
         # Cargar el modelo ya entrenado para su reentrenamiento
-        modelo = tf.keras.models.load_model(ruta + '5U1L64B.keras')
+        modelo = tf.keras.models.load_model(ruta + '20x2_17Model.keras')
 
         # Reentrenar el modelo con los nuevos datos
-        #EPOCHS = 20
-        #BATCH_SIZE = 64
+        EPOCHS = 10
+        BATCH_SIZE = 64
         #historial = modelo.fit(X_train_nuevos, Y_train_nuevos, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1)
 
         # Predicción multistep para días futuros
@@ -686,45 +684,47 @@ def irradiance_prediction():
         ultimo_X = datos_nuevos_escalados[-LONG_SEC:].reshape(1, LONG_SEC, 1)
 
         predicciones_futuras = []
-        num_predicciones = Dias_futuros * 156  # 156 valores por día
+        num_predicciones = Dias_futuros * 157  # 156 valores por día
 
         for i in range(int(num_predicciones // N_STEPS)):
             # Hacer la predicción usando el último punto disponible
             pred_nueva = modelo.predict(ultimo_X)
+            
             predicciones_futuras.extend(pred_nueva[0])  # Agrega todos los pasos predichos
 
             # Actualizar el último_X para incluir la nueva predicción
             ultimo_X = np.roll(ultimo_X, -N_STEPS, axis=1)
             ultimo_X[0, -N_STEPS:, 0] = pred_nueva[0].flatten()  # Aplanar el array antes de asignarlo
 
-        # Transformar las predicciones de vuelta a la escala original
-        predicciones_futuras = np.array(predicciones_futuras).reshape(-1, 1)
+        # Transformar las predicciones de vuelta a la escala original        
+        predicciones_futuras = np.array(predicciones_futuras).reshape(-1, 1)        
         predicciones_futuras_inv = scaler_nuevos.inverse_transform(predicciones_futuras)
         
         # Obtener la fecha y hora actuales
-        fecha_actual = datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
+        fecha_hora_actual = datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
 
         # Sumar un día y establecer la hora a las 6:00
         print('Esta es la fecha del dia sguiente: ')
-        #fecha_actual = (fecha_hora_actual + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
+        fecha_actual = (fecha_hora_actual + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
         print(fecha_actual)
 
         eje_x_pred = []
         while len(eje_x_pred) < len(predicciones_futuras_inv):
-            if 6 <= fecha_actual.hour < 19:  # Solo horas de 6:00 a 19:00
+            if 6 <= fecha_actual.hour <= 19:  # Solo horas de 6:00 a 19:00
                 eje_x_pred.append(fecha_actual)
             fecha_actual += pd.Timedelta(minutes=5)
-
+        
         # Crear DataFrame para las predicciones
         db_irr = pd.DataFrame({
             'fecha': eje_x_pred,
             'predicciones': predicciones_futuras_inv.flatten()
         })
-        print(db_irr)
+        # Ajustar las predicciones para que no sean menores que 0
+        db_irr['predicciones'] = db_irr['predicciones'].apply(lambda x: 0 if x < 1 else x)
+        print('datosssss',db_irr)
     else:
         print("No hay suficientes datos para generar secuencias de entrenamiento")
     return render_template('informe_y_Estadistica/date_davis.html',prediction_g = prediction_g, db_irr=db_irr.to_dict(orient='records'))
-
-
+    
 if __name__ == '__main__':
     app.run(debug=True)
