@@ -1,33 +1,44 @@
 {% block head %} {% include 'layouts/head.html' %} {% endblock %}
 
-<body class="fondo_login">
+<body class="fondo_login" style="background-color: #2c2f33; color: #fff;">
     <main>
-        <div class="container">
-            <div class="row">
-                <div class="col" style="margin-top:10rem">
-                    <img src="/static/images/sistema_fotovoltaico.png" class="img-fluid img-login" alt="Imagen de Inicio de Sesión">
+        <div class="container d-flex justify-content-center align-items-center vh-100">
+            <div class="row w-100" style="max-width: 900px;">
+                <!-- Logo -->
+                <div class="col-md-6 d-flex justify-content-center align-items-center">
+                    <img src="/static/images/logo/MTE-Blanco.png" class="img-fluid" alt="Logo" style="max-width: 100%; filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.4));">
                 </div>
-                <div class="col-sm-6 transparent-bg" style="margin-top:6rem">
-                    <div class="title-login" style="text-align: center;">Inicio de Sesión</div>
+                <!-- Formulario de Login -->
+                <div class="col-md-6 p-5" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px;">
+                    <h2 class="text-center mb-4" style="font-weight: bold; color: #00aaff;">Inicio de Sesión</h2>
                     <form id="login-form" method="POST" action="/login">
-                        <div class="form-group">
-                            <label for="cor_usu"><h6><b>Ingresa tu Correo: </b></h6></label>
-                            <input type="email" class="form-control" id="cor_usu" name="cor_usu" maxlength="100" placeholder="Escribe tú correo electrónico." required>
+                        <!-- Correo -->
+                        <div class="form-group mb-3">
+                            <label for="cor_usu" style="font-weight: 600;">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="cor_usu" name="cor_usu" placeholder="correo@ejemplo.com" required style="background-color: rgba(255, 255, 255, 0.2); color: #fff; border: none;">
                         </div>
-                        <div class="form-group" style="margin-top:1rem">
-                            <label for="con_usu"><h6><b>Contraseña: </b></h6></label>
-                            <input type="password" class="form-control" id="con_usu" name="con_usu" maxlength="15" placeholder="***************" required>
+                        <!-- Contraseña -->
+                        <div class="form-group mb-3">
+                            <label for="con_usu" style="font-weight: 600;">Contraseña</label>
+                            <input type="password" class="form-control" id="con_usu" name="con_usu" placeholder="***************" required style="background-color: rgba(255, 255, 255, 0.2); color: #fff; border: none;">
                         </div>
-                        <a href="/registro" style="color: azure;">¿No tienes una cuenta?</a><br>
-                        <div id="alertContainer" style="margin-top:2rem"></div>
-                        <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                        <!-- Enlace de Registro -->
+                        <div class="text-center mb-3">
+                            <a href="/registro" style="color: #00aaff; text-decoration: none;">¿No tienes una cuenta? Regístrate</a>
+                        </div>
+                        <!-- Botón de Inicio de Sesión -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary  btn-register">Iniciar Sesión</button>
+                        </div>
+                        <!-- Contenedor de Alerta -->
+                        <div id="alertContainer" class="text-center mt-3"></div>
                     </form>
                 </div>
             </div>
         </div>
     </main>
 </body>
-<script rel="stylesheet " src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js "></script>
-<script src="/static/js/scripts.js"></script>
 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+<script src="/static/js/scripts.js"></script>
 </html>

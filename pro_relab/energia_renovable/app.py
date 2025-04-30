@@ -242,9 +242,11 @@ def update_user():
 
     success = request.args.get('success')  # Obtiene el indicador de éxito de los parámetros de la URL
     error = request.args.get('error')  # Obtiene el indicador de error de los parámetros de la URL
-    user_id = session.get('user_id')  # Obtiene el ID del usuario autenticado de la sesión
-    if user_id is None:  # Si el usuario no ha iniciado sesión
-        return redirect(url_for('redirigir'))  # Redirige a la página de inicio de sesión   
+    # Obtener el ID del usuario de la sesión
+    user_id = session.get('user_id')    
+    if user_id is None:
+        # Si el usuario no ha iniciado sesión, redirigir a la página de inicio de sesión
+        return redirect(url_for('inicio_sesion'))    
     
     # Obtener más información del usuario a partir de su ID
     with get_db_connection() as conn:  # Abre una conexión a la base de datos

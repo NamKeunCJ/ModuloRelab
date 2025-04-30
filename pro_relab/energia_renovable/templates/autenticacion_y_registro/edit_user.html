@@ -125,8 +125,11 @@
                     </div>
                 </div>                            
             </div>
-        </div>
-    </section>
+            <div class="row justify-content-center" >
+                {% block footer %} {% include 'layouts/footer.html' %} {% endblock %}  
+            </div>
+        </div>        
+    </section> 
     <script rel="stylesheet" src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/datatables.js"></script>

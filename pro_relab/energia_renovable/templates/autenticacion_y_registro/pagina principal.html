@@ -47,7 +47,7 @@
             </div>            
           </div>
         </div>
-        <div class="row justify-content-center" style="padding-right: 7rem;padding-left: 7rem;">
+        <div class="row justify-content-center" >
           <!-- Tarjetas -->
           <div class="col-md-3 mb-3">
             <div class="card h-100 shadow-lg border-0 rounded-3">
@@ -80,10 +80,12 @@
             </div>
           </div>          
         </div>
+        <div class="row justify-content-center" >
+          {% block footer %} {% include 'layouts/footer.html' %} {% endblock %}  
+        </div>
       </div>
+      
     </section>
-    
-    
     
     <script rel="stylesheet " src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js "></script>
     <script src="{{ url_for( 'static', filename='js/bootstrap.min.js' ) }} "></script>

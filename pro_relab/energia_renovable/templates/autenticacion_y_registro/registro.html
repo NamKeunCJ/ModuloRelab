@@ -1,53 +1,64 @@
 {% block head %} {% include 'layouts/head.html' %} {% endblock %}
 
-<body class="fondo_login">
+<body class="fondo_login" style="background-color: #2c2f33; color: #fff;">
     <main>
-        <div class="container">
-            <div class="row">
-                <div class="col" style="margin-top:10rem">
-                    <img src="/static/images/sistema_fotovoltaico.png" class="img-fluid img-login" alt="Imagen de Inicio de Sesión">
+        <div class="container d-flex justify-content-center align-items-center vh-100">
+            <div class="row w-100" style="max-width: 900px;">
+                <!-- Logo -->
+                <div class="col-md-6 d-flex justify-content-center align-items-center">
+                    <img src="/static/images/logo/MTE-Blanco.png" class="img-fluid" alt="Logo" style="max-width: 100%; filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.4));">
                 </div>
-                <div class="col-sm-6 transparent-bg" style="margin-top:4rem;margin-bottom:2rem">
-                    <div class="title-login" style="text-align: center;">Regístrate</div>
+                <!-- Formulario de Registro -->
+                <div class="col-md-6 p-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px;">
+                    <h2 class="text-center mb-4" style="font-weight: bold; color: #00aaff;">Regístrate</h2>
                     <form id="registro-form" action="/registro" method="POST">
+                        <!-- Nombres y Apellidos -->
                         <div class="row">
                             <div class="form-group mb-3 col">
-                                <label for="nom_usu"><h6><b>Nombres: </b></h6></label>
-                                <input type="text" class="form-control" id="nom_usu" name="nom_usu" maxlength="50" placeholder="Escribe tu nombre." required>
+                                <label for="nom_usu"><b>Nombres</b></label>
+                                <input type="text" class="form-control" id="nom_usu" name="nom_usu" maxlength="50" placeholder="Escribe tu nombre" required style="background-color: rgba(255, 255, 255, 0.2); color: #fff; border: none;">
                             </div>
                             <div class="form-group mb-3 col">
-                                <label for="ape_usu"><h6><b>Apellidos: </b></h6></label>
-                                <input type="text" class="form-control" id="ape_usu" name="ape_usu" maxlength="50" placeholder="Escribe tus apellidos." required>
+                                <label for="ape_usu"><b>Apellidos</b></label>
+                                <input type="text" class="form-control" id="ape_usu" name="ape_usu" maxlength="50" placeholder="Escribe tus apellidos" required style="background-color: rgba(255, 255, 255, 0.2); color: #fff; border: none;">
                             </div>
                         </div>
-                        <div class="row" style="margin-top: 1rem;">
-                            <div class="form-group mb-3 col-sm-6">
-                                <label for="doc_usu"><h6><b>Número de documento: </b></h6></label>
-                                <input type="text" class="form-control" id="doc_usu" name="doc_usu" maxlength="10" pattern="[0-9]+" placeholder="Escribe número de documento." required>
+                        <!-- Documento y Correo -->
+                        <div class="row">
+                            <div class="form-group mb-3 col">
+                                <label for="doc_usu"><b>Número de documento</b></label>
+                                <input type="text" class="form-control" id="doc_usu" name="doc_usu" maxlength="10" pattern="[0-9]+" placeholder="Número de documento" required style="background-color: rgba(255, 255, 255, 0.2); color: #fff; border: none;">
                             </div>
-                            <div class="form-group mb-3 col-sm-6">
-                                <label for="cor_usu"><h6><b>Ingresa tu correo electrónico: </b></h6></label>
-                                <input type="email" class="form-control" id="cor_usu" name="cor_usu" maxlength="100" placeholder="Escribe tú correo electrónico." required>
+                            <div class="form-group mb-3 col">
+                                <label for="cor_usu"><b>Correo Electrónico</b></label>
+                                <input type="email" class="form-control" id="cor_usu" name="cor_usu" maxlength="100" placeholder="correo@ejemplo.com" required style="background-color: rgba(255, 255, 255, 0.2); color: #fff; border: none;">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="con_usu"><h6><b>Escribe una contraseña</b></h6></label>
-                            <input type="password" class="form-control" id="con_usu" name="con_usu" minlength="8" maxlength="15" placeholder="Contraseña maximo de 15 caracteres." required>
+                        <!-- Contraseña -->
+                        <div class="form-group mb-4">
+                            <label for="con_usu"><b>Contraseña</b></label>
+                            <input type="password" class="form-control" id="con_usu" name="con_usu" minlength="8" maxlength="15" placeholder="Máximo 15 caracteres" required style="background-color: rgba(255, 255, 255, 0.2); color: #fff; border: none;">
                         </div>
-                        <div class="h-captcha" data-sitekey="e6a7db78-1c2c-4183-9c16-f8ad8e871d75" style="margin-top: 2rem "></div>
-                        <a href="/inicio_sesion" style="color: azure; ">¡Ya tengo una cuenta!</a><br>
+                        <!-- hCaptcha -->
+                        <div class="h-captcha mb-3" data-sitekey="e6a7db78-1c2c-4183-9c16-f8ad8e871d75"></div>
+                        <!-- Enlace a Iniciar Sesión -->
+                        <div class="text-center mb-3">
+                            <a href="/inicio_sesion" style="color: #00aaff; text-decoration: none;">¡Ya tengo una cuenta!</a>
+                        </div>
+                        <!-- Contenedores de Alerta y Captcha -->
                         <div id="alertContainer" style="margin-top:2rem "></div>
                         <div id="capContainer" style="margin-top:2rem "></div>
-                        <button type="submit" class="btn btn-primary">Crear cuenta</button>
+                        <!-- Botón de Registro -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-register">Crear cuenta</button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </main>
 </body>
-<script rel="stylesheet " src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js "></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
 <script src="/static/js/scripts.js"></script>
-
-</html>
-
 </html>
